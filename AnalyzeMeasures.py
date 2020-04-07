@@ -311,6 +311,7 @@ def AnalyzeMeasures(frame, computervision_client):
             transformed_coords[i] = transform_coords(item, area)
             i = i + 1
     print("fixed coords are:", transformed_coords)
+    print("Areas on interest (in percentage) are: ", areas_dict)
     #TODO: add argument to choose whether or not to send response (send and/or print)
     return
 
