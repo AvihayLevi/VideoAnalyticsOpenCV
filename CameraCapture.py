@@ -56,7 +56,7 @@ class CameraCapture(object):
             cognitiveServiceKey="",
             modelId="",
             # TODO: change monitorID:
-            monitorid = "90210"):
+            monitorid = "3333"):
         self.videoPath = videoPath
         self.onboardingMode = onboardingMode
         # Avihay's bug fix:
@@ -126,15 +126,16 @@ class CameraCapture(object):
         self.computervision_client = ComputerVisionClient(COMPUTER_VISION_ENDPOINT, CognitiveServicesCredentials(COMPUTER_VISION_SUBSCRIPTION_KEY))
 
     def __get_boundries(self):
-        headers={'Content-type':'application/json', 'Accept':'application/json'}
-        url = "http://rstreamapp.azurewebsites.net/api/DownloadMonitorMapping?monitorID=" + self.monitor_id
-        post_response = requests.get(url, headers=headers)
-        json_response = post_response.content.decode('utf-8')
+        # headers={'Content-type':'application/json', 'Accept':'application/json'}
+        # url = "http://rstreamapp.azurewebsites.net/api/DownloadMonitorMapping?monitorID=" + self.monitor_id
+        url = "https://rstreamapptest.azurewebsites.net/rstream/api/med_equipment/" + self.monitor_id
+        response = requests.get(url)
+        json_response = response.text
         dict_response = json.loads(json_response)
-        mimage = dict_response["MonitorImage"]
-        mapping = dict_response["MappingJson"]
-        mapping_dict = json.loads(mapping)
-        self.boundries = mapping_dict
+        boundries_list = dict_response["boundries"]
+        self.boundries = {item['id']: item['point'] for item in boundries_list}
+        areas_list = dict_response["areas"]
+        self.areas_of_interes = {item['id']: item['point'] for item in areas_list}
         return
 
 
@@ -153,7 +154,7 @@ class CameraCapture(object):
             AnalyzeMeasures.AnalyzeMeasures(frame, self.computervision_client)
             # AnalyzeMeasures2.AnalyzeFrame(frame, self.computervision_client)
         else:
-            AnalyzeFrame.AnalyzeFrame(frame, self.computervision_client, self.boundries, self.ocrSocket)
+            AnalyzeFrame.AnalyzeFrame(frame, self.computervision_client, self.boundries, self.areas_of_interes, self.ocrSocket)
             # AnalyzeFrame2.AnalyzeFrame(frame, self.computervision_client, self.boundries)
         return True
 
