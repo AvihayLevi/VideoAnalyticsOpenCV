@@ -3,3 +3,4 @@ secret.Dockerfile
 env.list
 aci.txt
 __pycach__/*.*
+secModel.py

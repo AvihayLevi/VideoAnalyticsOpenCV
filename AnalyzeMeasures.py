@@ -87,8 +87,8 @@ def detect_markers(frame):
         # cv2.rectangle(clone, (mc[0][3][0], mc[0][3][1]), (mc[0][1][0], mc[0][1][1]), (0, 255, 0), 2)
         fixed_corners.append((np.mean([mc[0][0][0], mc[0][1][0], mc[0][2][0], mc[0][3][0]]),np.mean([mc[0][0][1], mc[0][1][1], mc[0][2][1], mc[0][3][1]])))
         
-    #cv2.imshow("Window", clone)
-    #cv2.waitKey(1)
+    # cv2.imshow("Window", clone)
+    # cv2.waitKey(0)
     #time.sleep(3)
     return fixed_corners
 
@@ -214,6 +214,20 @@ def bounding_boxes_output_former(bbox_dict, mon_id, encoded_image):
     output = fix_string(json_dict_string)
     return output
 
+
+def setup_output_former(fixed_coords, areas, encoded_image, id):
+    jdict = {}
+    coord_dicts = [{"point": v, "id": k, "type":None} for k, v in fixed_coords.items()]
+    areas_dicts = [{"point": v, "id": k} for k, v in areas.items()]
+    jdict["boundries"] = coord_dicts
+    jdict["areas"] = areas_dicts
+    jdict["mapping_image"] = encoded_image
+    jdict["id"] = id
+    jdict["status"] = "AfterCV"
+    output = json.dumps(jdict)
+    return output
+
+
 def get_digits_FBW(image, computervision_client):
     encodedFrame = cv2.imencode(".jpg", image)[1].tostring()
     recognize_printed_results = computervision_client.batch_read_file_in_stream(io.BytesIO(encodedFrame), raw = True)
@@ -289,7 +303,9 @@ def AnalyzeMeasures(frame, computervision_client):
 
     " TODO: detect markers here: "
     corners = detect_markers(frame)
+    print(corners)
     if len(corners) != 4:
+        print(len(corners))
         print("NOT DETECTED 4 CORNERS!")
     frame = four_point_transform(frame, corners)
 
@@ -313,27 +329,28 @@ def AnalyzeMeasures(frame, computervision_client):
     print("fixed coords are:", transformed_coords)
     print("Areas on interest (in percentage) are: ", areas_dict)
     #TODO: add argument to choose whether or not to send response (send and/or print)
-    return
+    
 
     b64img = base64.b64encode(cv2.imencode(".jpg", frame)[1])
     b64_encoded_frame = b64img.decode('utf-8')
-    
+        
     #TODO: get this data from Shany's DB
-    monitor_id = "90210"
-    json_string_fin = bounding_boxes_output_former(transformed_coords, monitor_id, b64_encoded_frame)
-    # print(json_string_fin)
-    url = "http://rstreamapp.azurewebsites.net/api/UploadMonitorMapping"
+    monitor_id = "3333"
+    json_string = setup_output_former(transformed_coords, areas_dict, b64_encoded_frame, monitor_id)
+    # json_string = bounding_boxes_output_former(transformed_coords, monitor_id, b64_encoded_frame)
+    # print(json_string)
+    url = "https://rstreamapptest.azurewebsites.net/rstream/api/med_equipment"
     headers = {'Content-type':'application/json', 'Accept':'application/json'}
-    for _ in range(4):
+    for trail in range(4):
         while True:
             try:
-                response = requests.post(url, data=json_string_fin, headers=headers)
+                response = requests.post(url, data=json_string, headers=headers)
             except Exception as e:
                 print("Exception while posting:   |    ", e)
                 # TODO: throw exception if all trails ended unsuccefuly
                 continue
             break
-    #print(response)     
+    print(response)     
 
     # TODO: sanity check results (charecters etc.) and send them to somewhere
     return
