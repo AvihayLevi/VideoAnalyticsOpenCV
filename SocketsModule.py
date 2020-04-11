@@ -15,7 +15,7 @@ class SocketNamespace(BaseNamespace):
  
 """
 # connect to server
-socketIO = SocketIO('https://rstream-node.azurewebsites.net', 443, BaseNamespace)
+socketIO = SocketIO('URL', 443, BaseNamespace)
 ocrns = socketIO.define(SocketNamespace, '/ocr')
 
 def send_data(data):

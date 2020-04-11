@@ -70,6 +70,7 @@ if __name__ == '__main__':
             val = line.split("=")[0].strip()
             os.environ[var] = val
     """
+    # TODO: read deviceID from the POD's input and inject as enviroment variable "DEVICE_ID"
     try:
         VIDEO_PATH = os.environ['VIDEO_PATH']
         print("Vid Path", VIDEO_PATH)

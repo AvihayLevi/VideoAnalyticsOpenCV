@@ -335,23 +335,23 @@ def AnalyzeMeasures(frame, computervision_client):
     b64_encoded_frame = b64img.decode('utf-8')
         
     #TODO: get this data from Shany's DB
-    monitor_id = "3333"
+    # monitor_id = "3333"
+    monitor_id = os.getenv("DEVICE_ID")
     json_string = setup_output_former(transformed_coords, areas_dict, b64_encoded_frame, monitor_id)
-    # json_string = bounding_boxes_output_former(transformed_coords, monitor_id, b64_encoded_frame)
-    # print(json_string)
     url = "https://rstreamapptest.azurewebsites.net/rstream/api/med_equipment"
     headers = {'Content-type':'application/json', 'Accept':'application/json'}
     for trail in range(4):
         while True:
             try:
+                print("SENDING")
                 response = requests.post(url, data=json_string, headers=headers)
             except Exception as e:
                 print("Exception while posting:   |    ", e)
                 # TODO: throw exception if all trails ended unsuccefuly
                 continue
             break
+        break
     print(response)     
-
     # TODO: sanity check results (charecters etc.) and send them to somewhere
     return
 

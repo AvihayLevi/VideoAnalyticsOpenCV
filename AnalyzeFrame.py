@@ -227,27 +227,15 @@ def fix_string(s):
         last_c = c
     return json_string_fin
 
-def output_former(ocr_res, room, pat_id, mon_id):
-    string_json = json.dumps(ocr_res)
-    json_dict = {}
-    json_dict["JsonData"] = string_json
-    json_dict["MonitorID"] = mon_id
-    json_dict["PatientID"] = pat_id
-    json_dict["Room"] = room
-    json_dict_string = str(json_dict)
-    print(json_dict_string)
-    output = fix_string(json_dict_string)
-    return output
-
 
 def sockets_output_former(ocr_res, mon_id):
     json_dict = {}
     json_dict["JsonData"] = ocr_res
     json_dict["DeviceID"] = mon_id
+    json_dict["deviceType"] = os.getenv("DEVICE_TYPE")
     output = json.dumps(json_dict)
     print(output)
     return output
-
 
 
 def get_digits(img, computervision_client):
@@ -328,8 +316,9 @@ def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrs
 
     # TODO: sanity check results (charecters etc.) and send them to somewhere
     # TODO: get as input, when Shany's team is ready
-    # mon_id = "90210"
-    mon_id = "3333"
-    json_to_socket = sockets_output_former(output, mon_id)
+    # monitor_id = "90210"
+    # monitor_id = "3333"
+    monitor_id = os.getenv("DEVICE_ID")
+    json_to_socket = sockets_output_former(output, monitor_id)
     ocrsocket.emit('data', json_to_socket)
     return

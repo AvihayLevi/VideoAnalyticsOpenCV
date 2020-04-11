@@ -54,9 +54,7 @@ class CameraCapture(object):
             resizeHeight = 0,
             annotate = False,
             cognitiveServiceKey="",
-            modelId="",
-            # TODO: change monitorID:
-            monitorid = "3333"):
+            modelId=""):
         self.videoPath = videoPath
         self.onboardingMode = onboardingMode
         # Avihay's bug fix:
@@ -84,7 +82,8 @@ class CameraCapture(object):
         self.nbOfPreprocessingSteps = 0
         self.autoRotate = False
         self.vs = None
-        self.monitor_id = monitorid
+        # TODO: wrap in try and add default value
+        self.monitor_id = os.getenv("DEVICE_ID")
 
         if not self.onboardingMode: # live-stream mode, will use known boundries
             self.__get_boundries()
@@ -126,8 +125,6 @@ class CameraCapture(object):
         self.computervision_client = ComputerVisionClient(COMPUTER_VISION_ENDPOINT, CognitiveServicesCredentials(COMPUTER_VISION_SUBSCRIPTION_KEY))
 
     def __get_boundries(self):
-        # headers={'Content-type':'application/json', 'Accept':'application/json'}
-        # url = "http://rstreamapp.azurewebsites.net/api/DownloadMonitorMapping?monitorID=" + self.monitor_id
         url = "https://rstreamapptest.azurewebsites.net/rstream/api/med_equipment/" + self.monitor_id
         response = requests.get(url)
         json_response = response.text
@@ -137,6 +134,8 @@ class CameraCapture(object):
         self.boundries = {item['type']: item['point'] for item in boundries_list}
         areas_list = dict_response["areas"]
         self.areas_of_interes = {item['id']: item['point'] for item in areas_list}
+        self.device_type = dict_response['type']
+        os.environ["DEVICE_TYPE"] = self.device_type
         return
 
 
