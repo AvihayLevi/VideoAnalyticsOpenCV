@@ -16,6 +16,7 @@ import re
 import cv2
 import math
 import numpy as np
+import ImagePreprocess
 
 
 def distance(p1, p2):
@@ -292,6 +293,7 @@ def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrs
     frame = four_point_transform(frame, fixed_corners)
 
     # Pre-Process: TODO: Integrate Gidi's module
+    frame = ImagePreprocess.unsharp(frame)
     # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     # blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     # rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9,3))
