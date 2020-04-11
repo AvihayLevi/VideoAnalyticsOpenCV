@@ -240,15 +240,12 @@ def output_former(ocr_res, room, pat_id, mon_id):
     return output
 
 
-def sockets_output_former(ocr_res, room, pat_id, mon_id):
+def sockets_output_former(ocr_res, mon_id):
     json_dict = {}
     json_dict["JsonData"] = ocr_res
-    json_dict["MonitorID"] = mon_id
-    json_dict["PatientID"] = pat_id
-    json_dict["Room"] = room
+    json_dict["DeviceID"] = mon_id
     output = json.dumps(json_dict)
     print(output)
-
     return output
 
 
@@ -297,24 +294,20 @@ def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrs
     
     # Find ARuco corners:
     new_corners = detect_markers(frame)
-    corners = [(508.0, 403.0), (113.5, 400.0), (572.0, 182.25), (53.75, 172.25)] #mon3
+    # TODO: get old_corners automatically - maybe return it with the function
+    old_corners = [(508.0, 403.0), (113.5, 400.0), (572.0, 182.25), (53.75, 172.25)] #mon3
     # corners = [(120.0, 404.0), (532.25, 386.0), (573.0, 124.0), (80.75, 113.5)] #mon4
 
     # TODO: raise exception if more than one corner wasn't detected:
-    fixed_corners = fix_corners(new_corners, corners)
+    fixed_corners = fix_corners(new_corners, old_corners)
     # pts = order_points(fixed_corners)
     frame = four_point_transform(frame, fixed_corners)
 
+    # Pre-Process: TODO: Integrate Gidi's module
     # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     # blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     # rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9,3))
     # frame = cv2.morphologyEx(gray,cv2.MORPH_TOPHAT, gray)
-
-    # TODO: get area_dicts from MOB/DB
-    #areas_dict = {'side': [0, 1, 0.7, 0.9], 'bottom': [0.6, 0.9, 0.3, 0.7]} #will be an input later! #monitor 1
-    #areas_dict = {'side': [0.1, 0.9, 0.67, 0.92]} #will be an input later! #monitor 3
-    #areas_dict = {'low': [0.6, 0.85, 0, 0.5], 'side': [0.1, 0.9, 0.6, 0.9]}
-    #areas_dict = {'0': [0.0, 1.0, 0.6, 0.8508771929824561], '1': [0.0, 0.30153846153846153, 0.0, 1.0]}
 
     areas_dict = areas_of_interes
     areas = create_areas(areas_dict, frame)
@@ -329,39 +322,14 @@ def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrs
             readings[i] = item[0]
             boundings[i] = transform_coords(item[1], area)
             i = i + 1
-    # boundry_dict = {i:[min(x[0],x[6]) -15,max(x[2],x[4]) +15 ,min(x[3],x[1]) -15,max(x[5],x[7]) + 15] for i,x in enumerate(boundings.values())}
-    # boundry_temp_mon32 = {0: ((471.0, 129), (516.0, 165)), 1: ((464.0, 170), (533.0, 213)), 2: ((469.0, 222), (541.0, 244)), 3: ((469.0, 272), (508.0, 306)), 4: ((471.0, 315), (505.0, 351))}
     
-    # MES-Setup inpurt by hand. TODO: get from API in the begining
-    # boundry_temp_mon32 = {0: ((132, 316.0), (246, 345.0)), 1: ((449.0, 172.0), (509.0, 221.0)), 2: ((439.0, 230.0), (485.0, 269.0)), 3: ((435.0, 271.0), (483.0, 312.0))}
-    # helka_dictionary = {0: [374.0, 18.0, 429.0, 18.0, 429.0, 51.0, 374.0, 52.0], 1: [370.0, 59.0, 419.0, 59.0, 417.0, 93.0, 369.0, 92.0], 2: [358.0, 96.0, 419.0, 92.0, 420.0, 128.0, 358.0, 122.0], 3: [34.0, 132.0, 197.0, 134.0, 196.0, 163.0, 33.0, 160.0]} #mon3
-    # boundry_temp_mon32 = {0: ((365.0, 26.0), (379.0, 39.0)), 1: ((380.0, 17.0), (437.0, 53.0)), 2: ((375.0, 61.0), (425.0, 95.0)), 3: ((377.0, 96.0), (429.0, 131.0)), 4: ((58.0, 140.0), (160.0, 166.0)), 5: ((93.0, 164.0), (140.0, 177.0))}
-
-    # boundry_temp_mon32 = {0: ((342.0, 9.0), (359.0, 16.0)), 1: ((398.0, 7.0), (470.0, 16.0)), 2: ((395.0, 47.0), (420.0, 55.0)), 3: ((407.0, 54.0), (419.0, 65.0)), 4: ((421.0, 38.0), (484.0, 84.0)), 5: ((400.0, 101.0), (420.0, 111.0)), 6: ((404.0, 110.0), (418.0, 122.0)), 7: ((422.0, 99.0), (472.0, 148.0)), 8: ((404.0, 159.0), (420.0, 170.0)), 9: ((416.0, 149.0), (477.0, 198.0)), 10: ((80.0, 9.0), (104.0, 18.0)), 11: ((331.0, 7.0), (358.0, 16.0)), 12: ((399.0, 7.0), (469.0, 16.0)), 13: ((40.0, 49.0), (64.0, 58.0)), 14: ((394.0, 46.0), (420.0, 57.0)), 15: ((86.0, 70.0), (108.0, 77.0)), 16: ((424.0, 36.0), (488.0, 87.0))}
-    # temp_mon = {k:[[v[0],v[1]],[v[4],v[5]]] for k,v in helka_dictionary.items()} #translate dic to normal version
-
     output = create_bounded_output(readings, boundings, transform_boundries(boundries), 3)
-    # output = create_bounded_output(readings, boundings, temp_mon, 3)
     # print(output)
 
-    
+    # TODO: sanity check results (charecters etc.) and send them to somewhere
     # TODO: get as input, when Shany's team is ready
-    pat_id = "200465524"
-    room = "13"
-    mon_id = "90210"
+    # mon_id = "90210"
     mon_id = "3333"
-    json_to_socket = sockets_output_former(output, room, pat_id, mon_id)
+    json_to_socket = sockets_output_former(output, mon_id)
     ocrsocket.emit('data', json_to_socket)
     return
-
-
-    json_string_fin = output_former(output, room, pat_id, mon_id)
-    print(json_string_fin)
-    url = "http://rstreamapp.azurewebsites.net/api/InsertMonitorData"
-    headers={'Content-type':'application/json', 'Accept':'application/json'}
-    response = requests.post(url, data=json_string_fin, headers=headers)
-
-    # TODO: sanity check results (charecters etc.) and send them to somewhere
-    return
-
-

@@ -133,7 +133,8 @@ class CameraCapture(object):
         json_response = response.text
         dict_response = json.loads(json_response)
         boundries_list = dict_response["boundries"]
-        self.boundries = {item['id']: item['point'] for item in boundries_list}
+        # self.boundries = {item['id']: item['point'] for item in boundries_list}
+        self.boundries = {item['type']: item['point'] for item in boundries_list}
         areas_list = dict_response["areas"]
         self.areas_of_interes = {item['id']: item['point'] for item in areas_list}
         return
