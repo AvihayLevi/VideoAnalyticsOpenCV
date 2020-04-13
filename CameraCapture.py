@@ -156,7 +156,9 @@ class CameraCapture(object):
     def __sendFrameForProcessing(self, frame):
         # TODO: try-except-throw - by what Lior wants for the wrapper
         if self.onboardingMode:
-            AnalyzeMeasures.AnalyzeMeasures(frame, self.computervision_client)
+            corners_flag = AnalyzeMeasures.AnalyzeMeasures(frame, self.computervision_client)
+            # reutrn True if 4 corners detected, else - False:
+            return corners_flag
             # AnalyzeMeasures2.AnalyzeFrame(frame, self.computervision_client)
         else:
             new_old_corners = AnalyzeFrame.AnalyzeFrame(frame, self.computervision_client, self.boundries, self.areas_of_interes, self.ocrSocket, self.setupMarkersCorners)
@@ -256,8 +258,10 @@ class CameraCapture(object):
                 if self.onboardingMode:
                     print('Onboarding mode, will stop stream after 1 frame')
                     response = self.__sendFrameForProcessing(encodedFrame)
-                    self.vs.stream.release()
-                    break
+                    if response:
+                        # if found 4 corners and there's a good mapping - stop and return
+                        self.vs.stream.release()
+                        break
                 else:
                     response = self.__sendFrameForProcessing(encodedFrame)
 

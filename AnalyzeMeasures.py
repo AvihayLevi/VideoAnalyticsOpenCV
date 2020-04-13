@@ -307,8 +307,11 @@ def AnalyzeMeasures(frame, computervision_client):
     corners = detect_markers(frame)
     print(corners)
     if len(corners) != 4:
+        # TODO: throw exception if 4 corners wern't found for a long time
         print(len(corners))
         print("NOT DETECTED 4 CORNERS!")
+        time.sleep(2)
+        return False
     frame = four_point_transform(frame, corners)
 
     areas_of_intrest = find_best_windows(computervision_client, frame, 2) #find best windows
@@ -355,6 +358,6 @@ def AnalyzeMeasures(frame, computervision_client):
         break
     print(response)     
     # TODO: sanity check results (charecters etc.) and send them to somewhere
-    return
+    return True
 
 
