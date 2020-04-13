@@ -282,11 +282,10 @@ def get_ala_digits(img):
     # encodedFrame = cv2.imencode(".jpg", img)[1].tostring()
     enc_img = base64.b64encode(img)
     data = {"image": str(enc_img, 'utf-8')}
-    data['screenCorners'] = {"left-top": [1, 1], "right-top": [600, 1], "bottom-left": [1, 550], "bottom-right": [600, 550]}
+    # data['screenCorners'] = {"left-top": [1, 1], "right-top": [600, 1], "bottom-left": [1, 550], "bottom-right": [600, 550]}
     res = requests.post("http://127.0.0.1:8088/v1/run_ocr", json=data)
     res_str = json.loads(res.text)
-    results = [(x["value"], [x["top"], x["left"], x["top"], x["right"], x["bottom"], x["right"], x["bottom"], x["left"]]) for x in res_str]
-    results_dicts = [{"text": x["value"], "coords": [x["top"], x["left"], x["top"], x["right"], x["bottom"], x["right"], x["bottom"], x["left"]]} for x in res_str]
+    results_dicts = [{"text": x["value"], "coords": [x["left"], x["top"], x["right"], x["top"], x["right"], x["bottom"], x["left"], x["bottom"]]} for x in res_str]
     # print(results_dicts)
     filtered_results = []
     for item in results_dicts:
@@ -300,7 +299,7 @@ def get_ala_digits(img):
             continue
     # print("--------------------")
     # print(filtered_results)
-    return(results)
+    return(filtered_results)
 
 
 def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrsocket, last_four_corners):
