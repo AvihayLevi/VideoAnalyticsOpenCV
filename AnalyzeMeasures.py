@@ -215,7 +215,7 @@ def bounding_boxes_output_former(bbox_dict, mon_id, encoded_image):
     return output
 
 
-def setup_output_former(fixed_coords, areas, encoded_image, id):
+def setup_output_former(fixed_coords, areas, encoded_image, id, corners):
     jdict = {}
     coord_dicts = [{"point": v, "id": k, "type":None} for k, v in fixed_coords.items()]
     areas_dicts = [{"point": v, "id": k} for k, v in areas.items()]
@@ -223,8 +223,10 @@ def setup_output_former(fixed_coords, areas, encoded_image, id):
     jdict["areas"] = areas_dicts
     jdict["mapping_image"] = encoded_image
     jdict["id"] = id
+    jdict["corners"] = [{"id": str(i), "point": [str(x[0]), str(x[1])]} for i,x in enumerate(corners)]
     jdict["status"] = "AfterCV"
     output = json.dumps(jdict)
+    # print(output)
     return output
 
 
@@ -337,7 +339,7 @@ def AnalyzeMeasures(frame, computervision_client):
     #TODO: get this data from Shany's DB
     # monitor_id = "3333"
     monitor_id = os.getenv("DEVICE_ID")
-    json_string = setup_output_former(transformed_coords, areas_dict, b64_encoded_frame, monitor_id)
+    json_string = setup_output_former(transformed_coords, areas_dict, b64_encoded_frame, monitor_id, corners)
     url = "https://rstreamapptest.azurewebsites.net/rstream/api/med_equipment"
     headers = {'Content-type':'application/json', 'Accept':'application/json'}
     for trail in range(4):

@@ -139,6 +139,8 @@ class CameraCapture(object):
         self.areas_of_interes = {item['id']: item['point'] for item in areas_list}
         self.device_type = dict_response['type']
         os.environ["DEVICE_TYPE"] = self.device_type
+        # self.setupMarkersCorners = dict_response["corners"]
+        self.setupMarkersCorners = [(d['point'][0], d['point'][1]) for d in dict_response["corners"]]
         return
 
 
@@ -157,7 +159,9 @@ class CameraCapture(object):
             AnalyzeMeasures.AnalyzeMeasures(frame, self.computervision_client)
             # AnalyzeMeasures2.AnalyzeFrame(frame, self.computervision_client)
         else:
-            AnalyzeFrame.AnalyzeFrame(frame, self.computervision_client, self.boundries, self.areas_of_interes, self.ocrSocket)
+            new_old_corners = AnalyzeFrame.AnalyzeFrame(frame, self.computervision_client, self.boundries, self.areas_of_interes, self.ocrSocket, self.setupMarkersCorners)
+            # TODO: try-except
+            self.setupMarkersCorners = new_old_corners
             # AnalyzeFrame2.AnalyzeFrame(frame, self.computervision_client, self.boundries)
         return True
 

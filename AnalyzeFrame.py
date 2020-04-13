@@ -17,6 +17,7 @@ import cv2
 import math
 import numpy as np
 import ImagePreprocess
+import base64
 
 
 def distance(p1, p2):
@@ -277,19 +278,51 @@ def get_digits(img, computervision_client):
     return(results)
 
 
+def get_ala_digits(img):
+    # encodedFrame = cv2.imencode(".jpg", img)[1].tostring()
+    enc_img = base64.b64encode(img)
+    data = {"image": str(enc_img, 'utf-8')}
+    data['screenCorners'] = {"left-top": [1, 1], "right-top": [600, 1], "bottom-left": [1, 550], "bottom-right": [600, 550]}
+    res = requests.post("http://127.0.0.1:8088/v1/run_ocr", json=data)
+    res_str = json.loads(res.text)
+    results = [(x["value"], [x["top"], x["left"], x["top"], x["right"], x["bottom"], x["right"], x["bottom"], x["left"]]) for x in res_str]
+    results_dicts = [{"text": x["value"], "coords": [x["top"], x["left"], x["top"], x["right"], x["bottom"], x["right"], x["bottom"], x["left"]]} for x in res_str]
+    # print(results_dicts)
+    filtered_results = []
+    for item in results_dicts:
+        s = re.sub('[^0123456789./]', '', item['text'])
+        if s != "":
+            if s[0] == ".":
+                s = s[1:]
+            s = s.rstrip(".")
+            filtered_results.append((s, item['coords']))
+        else:
+            continue
+    # print("--------------------")
+    # print(filtered_results)
+    return(results)
 
-def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrsocket):
+
+def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrsocket, last_four_corners):
     frame = cv2.imdecode(np.frombuffer(frame, np.uint8), -1)
     
     # Find ARuco corners:
     new_corners = detect_markers(frame)
     # TODO: get old_corners automatically - maybe return it with the function
-    old_corners = [(508.0, 403.0), (113.5, 400.0), (572.0, 182.25), (53.75, 172.25)] #mon3
+    old_corners = last_four_corners
+    # old_corners = [(492.5, 409.75), (121.5, 276.75), (527.25, 108.5), (93.75, 20.0)] #mon3
     # corners = [(120.0, 404.0), (532.25, 386.0), (573.0, 124.0), (80.75, 113.5)] #mon4
 
     # TODO: raise exception if more than one corner wasn't detected:
-    fixed_corners = fix_corners(new_corners, old_corners)
-    # pts = order_points(fixed_corners)
+    if len(new_corners) < 4:
+        fixed_corners = fix_corners(new_corners, old_corners)
+    elif len(new_corners) > 4:
+        #TODO: deal with it:
+        print("too much markers - do something")
+    else:
+        old_corners = new_corners
+        fixed_corners = new_corners
+    
     frame = four_point_transform(frame, fixed_corners)
 
     # Pre-Process: TODO: Integrate Gidi's module
@@ -308,6 +341,7 @@ def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrs
     i = 0
     for area in areas:
         results = get_digits(cv2.imencode(".jpg", area[0])[1], computervision_client)
+        # results = get_ala_digits(cv2.imencode(".jpg", area[0])[1])
         for item in results:
             readings[i] = item[0]
             boundings[i] = transform_coords(item[1], area)
@@ -323,4 +357,4 @@ def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrs
     monitor_id = os.getenv("DEVICE_ID")
     json_to_socket = sockets_output_former(output, monitor_id)
     ocrsocket.emit('data', json_to_socket)
-    return
+    return old_corners
