@@ -105,7 +105,70 @@ def sliding_window(image, step_size, window_size):
         continue
 
 
-def find_best_windows(computervision_client, warped_frame, num_of_windows=1):
+def sliding_up_window(image, step_size, window_size):
+	# slide a window across the image
+  for y in reversed(range(0, image.shape[0], step_size)):
+    for x in range(0, image.shape[1], step_size):
+			# yield the current window
+      if (y >= (image.shape[0] / 2)) and (y + window_size[1] <= image.shape[0]) and (x + window_size[0] <= image.shape[1]): 
+        print('total is:',image.shape[0], 'y is:', y)
+        yield (x, y, image[y:y + window_size[1], x:x + window_size[0]]) #we want only full windows
+      else:
+        continue
+
+
+def find_best_windows(computervision_client, warped_frame, num_of_windows = 2):
+    # Pre Process:
+    gray = cv2.cvtColor(warped_frame, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 3))
+    warped_frame = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, gray)
+    
+    #variables deff
+    best_score_v, best_score_h = 0, 0
+    best_window_v, best_window_h= [], []
+    s = warped_frame.shape
+    min_x, min_y = s[1]/40, s[0]/30
+    min_size = min_x * min_y  # min_size is set to be 3% y times 2.5%x
+    
+    #horizontal w?ndows
+    step_size = math.ceil(s[1] / 10)
+    winH, winW =  math.ceil(0.3*s[0]), s[1] #define horizontal sliding window size to be 0.3Y by X
+    for (x, y, window) in sliding_up_window(warped_frame, step_size, window_size=(winW, winH)):
+      temp_results = get_digits_FBW(window, computervision_client)
+      temp_results = [x for x in temp_results if ((x[1][4] - x[1][0]) * (x[1][5] - x[1][1])) > min_size and abs(x[1][4] - x[1][0]) > min_x and  abs(x[1][5] - x[1][1]) > min_y] # filter all results smaller than min size
+      temp_score = len(temp_results)
+      if temp_score >= best_score_h:
+        best_score_h = temp_score
+        best_window_h = [x, x + winW, y, y + winH]
+    #vertical w?ndows
+    if num_of_windows == 2:
+      winH, winW = s[0], math.ceil(0.3*s[1])  # define vertical sliding window size to be 0.3X by Y
+      step_size = math.ceil(s[0] / 10)
+      if best_window_h:
+        processed_frame_v = cv2.rectangle(warped_frame, (best_window_h[0], best_window_h[2]), (best_window_h[1], best_window_h[3]), (0, 255, 0), -1)# block area
+      else:
+        processed_frame_v = warped_frame
+      for (x, y, window) in sliding_window(processed_frame_v, step_size, window_size=(winW, winH)):
+        temp_results = get_digits_FBW(window, computervision_client)
+        temp_results = [x for x in temp_results if ((x[1][4] - x[1][0]) * (x[1][5] - x[1][1])) > min_size and abs(x[1][4] - x[1][0]) > min_x and  abs(x[1][5] - x[1][1]) > min_y] # filter all results smaller than min size
+        temp_score = len(temp_results)
+        if temp_score > best_score_v:
+          best_score_v = temp_score
+          best_window_v = [x, x + winW, y, y + winH]
+    # areas_dict value format is: [y_down, y_up, x_left, x_right]
+    final_result = []
+    if best_window_v:
+        print('best V : ', [best_window_v[2] / s[0], best_window_v[3] / s[0], best_window_v[0] / s[1], best_window_v[1] / s[1]])
+        final_result.append([best_window_v[2] / s[0], best_window_v[3] / s[0], best_window_v[0] / s[1], best_window_v[1] / s[1]])
+    if best_window_h:
+        print('best H : ', [best_window_h[2] / s[0], best_window_h[3] / s[0], best_window_h[0] / s[1], best_window_h[1] / s[1]])
+        final_result.append([best_window_h[2] / s[0], best_window_h[3] / s[0], best_window_h[0] / s[1], best_window_h[1] / s[1]])
+    return final_result
+
+
+
+def find_best_windows_OLD(computervision_client, warped_frame, num_of_windows=1):
     best_score_v = 0
     best_window_v = []
     best_window_h = []
@@ -293,6 +356,14 @@ def get_digits(img, computervision_client):
     return(results)
 
 
+def is_same_bounding(boundings_1, boundings_2): #bounding in form of (top_left_coords, bottom_right_coords)
+    output = abs(boundings_1[0][0] - boundings_2[0][0]) < 15
+    output = output and abs(boundings_1[0][1] - boundings_2[0][1]) < 15
+    output = output and abs(boundings_1[1][0] - boundings_2[1][0]) < 15
+    output = output and abs(boundings_1[1][1] - boundings_2[1][1]) < 15
+    return output 
+
+
 def AnalyzeMeasures(frame, computervision_client):
     frame = cv2.imdecode(np.frombuffer(frame, np.uint8), -1)
     # cv2.imwrite("image.jpg", frame)
@@ -318,11 +389,20 @@ def AnalyzeMeasures(frame, computervision_client):
     areas_dict = {i:area for i,area in enumerate(areas_of_intrest)} #transform into dictionary of bounderies
     areas = create_areas(areas_dict, frame)
 
-
     # our output
-    coords = {}
     transformed_coords = {}
     i = 0
+    for area in areas:
+        result = get_digits(area[0], computervision_client)
+        print(result)
+        for item in result:
+            transformed_boundries = transform_coords(item, area)
+            if True in [is_same_bounding(x,transformed_boundries) for x in transformed_coords.values()]: #at least one of current boundings is the same
+                print('duplicate detected!')
+                continue #duplicate detected, do not add this value!
+            transformed_coords[i] = transformed_boundries
+            i = i + 1
+    """
     for area in areas:
         result = get_digits(area[0], computervision_client)
         print(result)
@@ -331,6 +411,7 @@ def AnalyzeMeasures(frame, computervision_client):
             coords[i] = item
             transformed_coords[i] = transform_coords(item, area)
             i = i + 1
+    """
     print("fixed coords are:", transformed_coords)
     print("Areas on interest (in percentage) are: ", areas_dict)
     #TODO: add argument to choose whether or not to send response (send and/or print)

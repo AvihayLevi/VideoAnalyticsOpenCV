@@ -125,7 +125,7 @@ class CameraCapture(object):
         self.computervision_client = ComputerVisionClient(COMPUTER_VISION_ENDPOINT, CognitiveServicesCredentials(COMPUTER_VISION_SUBSCRIPTION_KEY))
 
     def __get_boundries(self):
-        url = "https://rstreamapptest.azurewebsites.net/rstream/api/med_equipment/" + self.monitor_id
+        url = "https://rstreamapptest.azurewebsites.net/rstream/api/med_equipment/" + self.monitor_id +"?image=false"
         response = requests.get(url)
         json_response = response.text
         dict_response = json.loads(json_response)
