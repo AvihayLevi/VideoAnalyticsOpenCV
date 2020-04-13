@@ -63,13 +63,6 @@ def __convertStringToBool(env):
 
 
 if __name__ == '__main__':
-    """
-    with open("env.list", "r") as file:
-        for line in file:
-            var = line.split("=")[0]
-            val = line.split("=")[0].strip()
-            os.environ[var] = val
-    """
     # TODO: read deviceID from the POD's input and inject as enviroment variable "DEVICE_ID"
     try:
         VIDEO_PATH = os.environ['VIDEO_PATH']
