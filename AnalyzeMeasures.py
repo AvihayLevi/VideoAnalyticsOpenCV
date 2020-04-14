@@ -138,7 +138,7 @@ def find_best_windows(computervision_client, warped_frame, num_of_windows = 2):
       temp_results = get_digits_FBW(window, computervision_client)
       temp_results = [x for x in temp_results if ((x[1][4] - x[1][0]) * (x[1][5] - x[1][1])) > min_size and abs(x[1][4] - x[1][0]) > min_x and  abs(x[1][5] - x[1][1]) > min_y] # filter all results smaller than min size
       temp_score = len(temp_results)
-      if temp_score >= best_score_h:
+      if temp_score > best_score_h:
         best_score_h = temp_score
         best_window_h = [x, x + winW, y, y + winH]
     #vertical w?ndows
@@ -153,7 +153,7 @@ def find_best_windows(computervision_client, warped_frame, num_of_windows = 2):
         temp_results = get_digits_FBW(window, computervision_client)
         temp_results = [x for x in temp_results if ((x[1][4] - x[1][0]) * (x[1][5] - x[1][1])) > min_size and abs(x[1][4] - x[1][0]) > min_x and  abs(x[1][5] - x[1][1]) > min_y] # filter all results smaller than min size
         temp_score = len(temp_results)
-        if temp_score > best_score_v:
+        if temp_score >= best_score_v:
           best_score_v = temp_score
           best_window_v = [x, x + winW, y, y + winH]
     # areas_dict value format is: [y_down, y_up, x_left, x_right]

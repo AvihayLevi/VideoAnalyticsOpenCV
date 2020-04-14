@@ -317,7 +317,8 @@ def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrs
         fixed_corners = fix_corners(new_corners, old_corners)
     elif len(new_corners) > 4:
         #TODO: deal with it:
-        print("too much markers - do something")
+        print("too much markers - get old ones")
+        fixed_corners = old_corners
     else:
         old_corners = new_corners
         fixed_corners = new_corners
