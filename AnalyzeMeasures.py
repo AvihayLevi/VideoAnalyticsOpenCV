@@ -167,63 +167,6 @@ def find_best_windows(computervision_client, warped_frame, num_of_windows = 2):
     return final_result
 
 
-
-def find_best_windows_OLD(computervision_client, warped_frame, num_of_windows=1):
-    best_score_v = 0
-    best_window_v = []
-    best_window_h = []
-    s = warped_frame.shape
-    # TODO: create larger windows (all the widht/length of the frame)
-    # define vertical sliding window size to be 0.25X by Y
-    winH, winW = s[0], math.ceil(0.25*s[1])
-    step_size = math.ceil(s[1] / 10)
-
-    # Pre Process:
-    
-    gray = cv2.cvtColor(warped_frame, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 3))
-    warped_frame = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, gray)
-    
-
-    min_size = (s[0]/100) * (s[1]/100)  # min_size is set to be 1X1% of monitor
-    for (x, y, window) in sliding_window(warped_frame, step_size, window_size=(winW, winH)):  # vertical windows
-      temp_results = get_digits_FBW(window, computervision_client)
-      # filter all results smaller than min size
-      temp_results = [x for x in temp_results if (
-          (x[1][4] - x[1][0]) * (x[1][5] - x[1][1])) > min_size]
-      temp_score = len(temp_results)
-      if temp_score > best_score_v:
-        best_score_v = temp_score
-        # [x, x + winW, y, y + winH]
-        best_window_v = [x, x + winW, y, y + winH]
-    if num_of_windows == 2:
-      # define horizontal sliding window size to be 0.3Y by X
-      winH, winW = math.ceil(0.3*s[0]), s[1]
-      step_size = math.ceil(s[0] / 10)
-      best_score_h = 0
-      if best_window_v:
-        processed_frame_h = cv2.rectangle(warped_frame, (best_window_v[0], best_window_v[2]), (best_window_v[1], best_window_v[3]), (0, 255, 0), -1)  # block best vertical area
-      else:
-        processed_frame_h = warped_frame
-      for (x, y, window) in sliding_window(processed_frame_h, step_size, window_size=(winW, winH)):  # horizontal windows
-        temp_results = get_digits_FBW(window, computervision_client)
-        # filter all results smaller than min size
-        temp_results = [x for x in temp_results if (
-            (x[1][4] - x[1][0]) * (x[1][5] - x[1][1])) > min_size]
-        temp_score = len(temp_results)
-        if temp_score > best_score_h:
-          best_score_h = temp_score
-          best_window_h = [x, x + winW, y, y + winH]
-    # areas_dict value format is: [y_down, y_up, x_left, x_right]
-    final_result = []
-    if best_window_v:
-        final_result.append([best_window_v[2] / s[0], best_window_v[3] / s[0], best_window_v[0] / s[1], best_window_v[1] / s[1]])
-    if best_window_h:
-        final_result.append([best_window_h[2] / s[0], best_window_h[3] / s[0], best_window_h[0] / s[1], best_window_h[1] / s[1]])
-    return final_result
-
-
 def create_areas(area_dict, img):
     s = img.shape
     height, width = s[0], s[1]
@@ -306,7 +249,7 @@ def get_digits_FBW(image, computervision_client):
     if get_printed_text_results.status == TextOperationStatusCodes.succeeded:
         for text_result in get_printed_text_results.recognition_results:
             for line in text_result.lines:
-              s = re.sub('[^0123456789./]', '', line.text)
+              s = re.sub('[^0123456789./:]', '', line.text)
               if s != "":
                   if s[0] == ".":
                       s = s[1:]
@@ -337,7 +280,7 @@ def get_digits(img, computervision_client):
         for text_result in get_printed_text_results.recognition_results:
             for line in text_result.lines:
                 print(line.text, line.bounding_box)
-                s = re.sub('[^0123456789./]', '', line.text)
+                s = re.sub('[^0123456789./:]', '', line.text)
                 if s != "":
                     if s[0] == ".":
                         s = s[1:]
@@ -402,26 +345,14 @@ def AnalyzeMeasures(frame, computervision_client):
                 continue #duplicate detected, do not add this value!
             transformed_coords[i] = transformed_boundries
             i = i + 1
-    """
-    for area in areas:
-        result = get_digits(area[0], computervision_client)
-        print(result)
-        for item in result:
-            print(i, item)
-            coords[i] = item
-            transformed_coords[i] = transform_coords(item, area)
-            i = i + 1
-    """
+    
     print("fixed coords are:", transformed_coords)
     print("Areas on interest (in percentage) are: ", areas_dict)
-    #TODO: add argument to choose whether or not to send response (send and/or print)
     
-
+    #TODO: add argument to choose whether or not to send response (send and/or print)
     b64img = base64.b64encode(cv2.imencode(".jpg", frame)[1])
     b64_encoded_frame = b64img.decode('utf-8')
         
-    #TODO: get this data from Shany's DB
-    # monitor_id = "3333"
     monitor_id = os.getenv("DEVICE_ID")
     json_string = setup_output_former(transformed_coords, areas_dict, b64_encoded_frame, monitor_id, corners)
     url = "https://rstreamapptest.azurewebsites.net/rstream/api/med_equipment"
