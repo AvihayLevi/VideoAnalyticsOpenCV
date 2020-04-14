@@ -261,7 +261,7 @@ def get_digits(img, computervision_client):
         for text_result in get_printed_text_results.recognition_results:
             for line in text_result.lines:
                 # print(line.text, line.bounding_box)
-                s = re.sub('[^0123456789./]', '', line.text)
+                s = re.sub('[^0123456789./:]', '', line.text)
                 if s != "":
                     if s[0] == ".":
                         s = s[1:]
