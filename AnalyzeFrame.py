@@ -18,6 +18,7 @@ import math
 import numpy as np
 import ImagePreprocess
 import base64
+from Levenshtein import distance as Ldistance
 
 
 def distance(p1, p2):
@@ -240,8 +241,11 @@ def sockets_output_former(ocr_res, mon_id):
     return output
 
 
-def get_digits(img, computervision_client):
+def get_digits(img, computervision_client, mode="digits"):
     # encodedFrame = cv2.imencode(".jpg", img)[1].tostring()
+    # tmp_frame = cv2.imdecode(np.frombuffer(img, np.uint8), -1)
+    # cv2.imshow("image", tmp_frame)
+    # cv2.waitKey(0)
     recognize_printed_results = computervision_client.batch_read_file_in_stream(io.BytesIO(img), raw = True)
     # Reading OCR results
     operation_location_remote = recognize_printed_results.headers["Operation-Location"]
@@ -260,17 +264,31 @@ def get_digits(img, computervision_client):
         for text_result in get_printed_text_results.recognition_results:
             for line in text_result.lines:
                 # print(line.text, line.bounding_box)
-                s = re.sub('[^0123456789./:]', '', line.text)
-                if s != "":
-                    if s[0] == ".":
-                        s = s[1:]
-                    s = s.rstrip(".")
-                    text_flag = True
-                    cv2.rectangle(tmp_frame, (int(line.bounding_box[0]), int(line.bounding_box[1])), (int(line.bounding_box[4]), int(line.bounding_box[5])), (255,0,0), 2)
-                    cv2.putText(tmp_frame,s,(int(line.bounding_box[0])-5, int(line.bounding_box[1])-5),cv2.FONT_HERSHEY_COMPLEX,0.3,(0,0,0),1)
-                    results.append((s, line.bounding_box))
-                else:
-                    continue
+                if mode == "digits":
+                    s = re.sub('[^0123456789./:]', '', line.text)
+                    if s != "":
+                        if s[0] == ".":
+                            s = s[1:]
+                        s = s.rstrip(".")
+                        text_flag = True
+                        cv2.rectangle(tmp_frame, (int(line.bounding_box[0]), int(line.bounding_box[1])), (int(line.bounding_box[4]), int(line.bounding_box[5])), (255,0,0), 2)
+                        cv2.putText(tmp_frame,s,(int(line.bounding_box[0])-5, int(line.bounding_box[1])-5),cv2.FONT_HERSHEY_COMPLEX,0.3,(0,0,0),1)
+                        results.append((s, line.bounding_box))
+                    else:
+                        continue
+                if mode == "modes":
+                    # s = re.sub('[^0123456789./:]', '', line.text)
+                    s = line.text
+                    if s != "":
+                        if s[0] == ".":
+                            s = s[1:]
+                        s = s.rstrip(".")
+                        text_flag = True
+                        cv2.rectangle(tmp_frame, (int(line.bounding_box[0]), int(line.bounding_box[1])), (int(line.bounding_box[4]), int(line.bounding_box[5])), (255,0,0), 2)
+                        cv2.putText(tmp_frame,s,(int(line.bounding_box[0])-5, int(line.bounding_box[1])-5),cv2.FONT_HERSHEY_COMPLEX,0.3,(0,0,0),1)
+                        results.append((s, line.bounding_box))
+                    else:
+                        continue
         if text_flag and show_frame_flag:
             cv2.imshow("image", tmp_frame)
             cv2.waitKey(0)
@@ -314,8 +332,56 @@ def boundries_to_areas(boundries, hight, width):
     return areas
 
 
-def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrsocket, last_four_corners):
-    frame = cv2.imdecode(np.frombuffer(frame, np.uint8), -1)
+def getVelaModeAndWarning(img, computervision_client):
+    #TODO: change w.r.t cropped image
+    top_area = {"mode": [0, 0.35, 0, 0.4], "warning": [0, 0.35, 0.55, 1]}
+    areas = create_areas(top_area, img)
+    readings = {}
+    boundings = {}
+    i = 0
+    for area in areas:
+        results = get_digits(cv2.imencode(".jpg", area[0])[1], computervision_client, "modes")
+        # results = get_ala_digits(cv2.imencode(".jpg", area[0])[1])
+        for item in results:
+            readings[i] = item[0]
+            boundings[i] = transform_coords(item[1], area)
+            i = i + 1
+    strings_found = [v.lower().replace(" ", "") for v in readings.values()]
+    print(strings_found)
+
+    # check mode:
+    known_modes = ["volumesimv","prvca/c"] # buggy mode in purpose
+    min_mode_distance = 99
+    found_mode = "UNKNOWN MODE"
+    for item in strings_found:
+        for mode in known_modes:
+            tmp_mode_dis = Ldistance(item, mode)
+            # print(item, mode, tmp_mode_dis)
+            if tmp_mode_dis < min_mode_distance and tmp_mode_dis <= len(mode)/2:
+                min_mode_distance = tmp_mode_dis
+                found_mode = mode
+                # print("update")
+    print(found_mode, min_mode_distance)
+
+    # check warning:
+    known_warnings = ["highpip", "lowpip", "circuitdisconnect", "lowve", "apneainterval", "o2inletlow", "checkfilter"]
+    min_warning_distance = 99
+    found_warning = "no warning"
+    for item in strings_found:
+        for warning in known_warnings:
+            tmp_warning_dis = Ldistance(item, warning)
+            # print(item, warning, tmp_warning_dis)
+            if tmp_warning_dis < min_warning_distance and tmp_warning_dis <= len(warning)/2:
+                min_warning_distance = tmp_warning_dis
+                found_warning = warning
+                # print("update")
+    print(found_warning, min_warning_distance)
+    return found_mode, found_warning
+
+
+def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes, ocrsocket, last_four_corners):
+    frame = cv2.imdecode(np.frombuffer(orig_frame, np.uint8), -1)
+    orig_frame = cv2.imdecode(np.frombuffer(orig_frame, np.uint8), -1)
     
     # Find ARuco corners:
     new_corners = detect_markers(frame)
@@ -330,6 +396,17 @@ def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrs
         old_corners = new_corners
         fixed_corners = new_corners
     frame = four_point_transform(frame, fixed_corners)
+    
+    
+    device_type = os.getenv("DEVICE_TYPE")
+    if device_type == "respiration":
+        found_mode, found_warning = getVelaModeAndWarning(orig_frame, computervision_client)
+        if found_mode != "volumesimv":
+            print("UNKNOWN MODE DETECTED!!")
+            # TODO: try again and raise exception
+        if found_warning != "no warning":
+            print("RESPIRATION WARNING:  ", found_warning)
+
 
     # Pre-Process: TODO: Integrate Gidi's module
     frame = ImagePreprocess.unsharp(frame)
@@ -348,7 +425,7 @@ def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrs
     i = 0
     for area in areas:
         try:
-            results = get_digits(cv2.imencode(".jpg", area[0])[1], computervision_client)
+            results = get_digits(cv2.imencode(".jpg", area[0])[1], computervision_client, "digits")
             # results = get_ala_digits(cv2.imencode(".jpg", area[0])[1])
         except Exception as e:
             print(e)
