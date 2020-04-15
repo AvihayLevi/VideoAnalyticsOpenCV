@@ -242,7 +242,6 @@ def sockets_output_former(ocr_res, mon_id):
 
 def get_digits(img, computervision_client):
     # encodedFrame = cv2.imencode(".jpg", img)[1].tostring()
-    
     recognize_printed_results = computervision_client.batch_read_file_in_stream(io.BytesIO(img), raw = True)
     # Reading OCR results
     operation_location_remote = recognize_printed_results.headers["Operation-Location"]
@@ -279,7 +278,9 @@ def get_digits(img, computervision_client):
 
 
 def get_ala_digits(img):
-    # encodedFrame = cv2.imencode(".jpg", img)[1].tostring()
+    # tmp_frame = cv2.imdecode(np.frombuffer(img, np.uint8), -1)
+    # cv2.imshow("image", tmp_frame)
+    # cv2.waitKey(0)
     enc_img = base64.b64encode(img)
     data = {"image": str(enc_img, 'utf-8')}
     # data['screenCorners'] = {"left-top": [1, 1], "right-top": [600, 1], "bottom-left": [1, 550], "bottom-right": [600, 550]}
@@ -289,7 +290,7 @@ def get_ala_digits(img):
     # print(results_dicts)
     filtered_results = []
     for item in results_dicts:
-        s = re.sub('[^0123456789./]', '', item['text'])
+        s = re.sub('[^0123456789./:]', '', item['text'])
         if s != "":
             if s[0] == ".":
                 s = s[1:]
@@ -302,27 +303,32 @@ def get_ala_digits(img):
     return(filtered_results)
 
 
+def boundries_to_areas(boundries, hight, width):
+    areas = {}
+    i = 0
+    for k,v in boundries.items():
+        x1, y1, x2, y2 = v[0][0], v[0][1], v[1][0], v[1][1]
+        top, bottom, left, right = y1/hight, y2/hight, x1/width, x2/width
+        areas[i] = [top, bottom, left, right]
+        i = i + 1
+    return areas
+
+
 def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrsocket, last_four_corners):
     frame = cv2.imdecode(np.frombuffer(frame, np.uint8), -1)
     
     # Find ARuco corners:
     new_corners = detect_markers(frame)
-    # TODO: get old_corners automatically - maybe return it with the function
     old_corners = last_four_corners
-    # old_corners = [(492.5, 409.75), (121.5, 276.75), (527.25, 108.5), (93.75, 20.0)] #mon3
-    # corners = [(120.0, 404.0), (532.25, 386.0), (573.0, 124.0), (80.75, 113.5)] #mon4
 
-    # TODO: raise exception if more than one corner wasn't detected:
     if len(new_corners) < 4:
         fixed_corners = fix_corners(new_corners, old_corners)
     elif len(new_corners) > 4:
-        #TODO: deal with it:
-        print("too much markers - get old ones")
+        # print("too much markers - get old ones")
         fixed_corners = old_corners
     else:
         old_corners = new_corners
         fixed_corners = new_corners
-    
     frame = four_point_transform(frame, fixed_corners)
 
     # Pre-Process: TODO: Integrate Gidi's module
@@ -333,15 +339,20 @@ def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrs
     # frame = cv2.morphologyEx(gray,cv2.MORPH_TOPHAT, gray)
 
     areas_dict = areas_of_interes
+    # areas_dict = boundries_to_areas(boundries, frame.shape[0], frame.shape[1])
     areas = create_areas(areas_dict, frame)
-
+    
     # our output
     readings = {}
     boundings = {}
     i = 0
     for area in areas:
-        results = get_digits(cv2.imencode(".jpg", area[0])[1], computervision_client)
-        # results = get_ala_digits(cv2.imencode(".jpg", area[0])[1])
+        try:
+            results = get_digits(cv2.imencode(".jpg", area[0])[1], computervision_client)
+            # results = get_ala_digits(cv2.imencode(".jpg", area[0])[1])
+        except Exception as e:
+            print(e)
+            continue
         for item in results:
             readings[i] = item[0]
             boundings[i] = transform_coords(item[1], area)
@@ -352,8 +363,6 @@ def AnalyzeFrame(frame, computervision_client, boundries, areas_of_interes, ocrs
 
     # TODO: sanity check results (charecters etc.) and send them to somewhere
     # TODO: get as input, when Shany's team is ready
-    # monitor_id = "90210"
-    # monitor_id = "3333"
     monitor_id = os.getenv("DEVICE_ID")
     json_to_socket = sockets_output_former(output, monitor_id)
     ocrsocket.emit('data', json_to_socket)
