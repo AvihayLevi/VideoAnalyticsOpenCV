@@ -379,6 +379,36 @@ def getVelaModeAndWarning(img, computervision_client):
     return found_mode, found_warning
 
 
+def fix_readings(readings_dic):
+    for name, read in readings_dic.items(): 
+        read, rlen = str(read), len(read) 
+        if name == 'IBP':
+            if rlen >= 6: # XXX/XXX or XXX/XX
+                if read[3] in [7,1] : # mistake: 120780 -> 120/80, 1407110 -> 140/110 
+                    readings_dic[name] = read[:2] + '/' + read[4:]
+            elif rlen == 5: # XX/XX
+                if read[2] in [7,1] : # mistake: 90760 -> 90/60 
+                    readings_dic[name] = read[:1] + '/' + read[3:]
+        elif name == 'HR': 
+            continue 
+        elif name == 'temp': 
+            if rlen >= 3:
+                if read[2] not in [',','.']: # XXX 
+                    readings_dic[name] = read[:2] + '.' + read[2:] # mistake: 307 -> 30.7
+        elif name == 'IE':
+            # TODO: add symetric testing
+            print('trying IE, original is:', read)        
+            if rlen >= 2:
+                if read[1] != ':':
+                    read = read[:1] + ':' + read[1:] # mistake: 133 - >1:33
+                if read[-2] != '.':
+                    read = read[:-1] + '.' + read[-1:] # mistake: 1:33 - > 1:3.3
+                readings_dic[name] = read
+    return readings_dic
+        
+
+
+
 def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes, ocrsocket, last_four_corners):
     frame = cv2.imdecode(np.frombuffer(orig_frame, np.uint8), -1)
     orig_frame = cv2.imdecode(np.frombuffer(orig_frame, np.uint8), -1)
@@ -436,6 +466,9 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
             i = i + 1
     
     output = create_bounded_output(readings, boundings, transform_boundries(boundries), 3)
+    # IMPORTANT: when needed - comment-out next line and change get_boundries accordingly
+    # output = fix_readings(output)
+    
     # print(output)
 
     # TODO: sanity check results (charecters etc.) and send them to somewhere
