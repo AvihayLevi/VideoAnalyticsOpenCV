@@ -19,6 +19,8 @@ import numpy as np
 import ImagePreprocess
 import base64
 from Levenshtein import distance as Ldistance
+import operator
+from termcolor import colored
 
 
 def distance(p1, p2):
@@ -406,10 +408,74 @@ def fix_readings(readings_dic):
                 readings_dic[name] = read
     return readings_dic
         
+def isNumber(x):
+    try:
+        return bool(0 == float(x)*0)
+    except:
+        return False
+
+def fix_output(output, results_list):
+    new_output = output.copy()
+    for key, val in output.items():
+        new_val = val
+        # print(isNumber(val))
+        for i in range(len(results_list)):
+            last_val = "N/A"
+            if results_list[-1-i][key] != "N/A":
+                last_val = results_list[-1-i][key]
+                last_val_key = i
+                break
+        if val == "N/A":
+            new_val = last_val
+        else:
+            if isNumber(val) and isNumber(last_val): 
+                if abs(float(val)-float(last_val)) > 0.5 * float(val):
+                    new_val = last_val
+                    older_val = None
+                    for i in range(len(results_list)-last_val_key-1):
+                        if results_list[-2-last_val_key-i][key] != "N/A":
+                            older_val = results_list[-2-last_val_key-i][key]
+                            break
+                        older_val = "N/A"
+                    if isNumber(older_val):
+                        if abs(float(last_val)-float(older_val)) > 0.5 * float(last_val):
+                            new_val = val
+        new_output[key] = new_val
+    return new_output
+            
+
+def generic_errors(output, last_results):
+    miss_count = 0
+    for key, value in output.items():
+        if value == "N/A":
+            miss_count += 1
+    if miss_count>0:
+        if miss_count>=0.5*len(output):
+            if miss_count>=0.75*len(output):
+                print(colored("Fatal error, almost no data in format","red"))
+            else:
+                print(colored("Error, most data not in format","red"))
+        else:
+            print(colored("Mild error, some missing fields","yellow"))
+    missing_dict = {}
+    amount_of_results = len(last_results)
+    for res in last_results:
+        for key, value in res.items():
+            if value is None:
+                if key in missing_dict.keys():
+                    missing_dict[key] += 1
+                else:
+                    missing_dict[key] = 1
+    completely_missing_vals = []
+    for key, value in missing_dict.items():
+        if value == amount_of_results:
+            completely_missing_vals.append(key)
+    if len(completely_missing_vals) > 0:
+        print(colored("Error, ","red"), completely_missing_vals, colored("are missing from the last ","red"), amount_of_results, colored("frames!","red"))
+    return
 
 
-
-def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes, ocrsocket, last_four_corners):
+def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes, ocrsocket, last_four_corners, old_results_list):
     frame = cv2.imdecode(np.frombuffer(orig_frame, np.uint8), -1)
     orig_frame = cv2.imdecode(np.frombuffer(orig_frame, np.uint8), -1)
     
@@ -468,7 +534,18 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
     output = create_bounded_output(readings, boundings, transform_boundries(boundries), 3)
     # IMPORTANT: when needed - comment-out next line and change get_boundries accordingly
     # output = fix_readings(output)
+
+    if len(old_results_list) < 5:
+        old_results_list.append(output) #build "window" of 15 frames
+        fixed_result = False
+    #return last_results #just append, less than 15 frames seen
+    else:
+        old_results_list.pop(0) #remove oldest frame from list
+        fixed_result = fix_output(output, old_results_list) 
+        old_results_list.append(output) #add our current result
     
+    generic_errors(output, old_results_list)
+
     # print(output)
 
     # TODO: sanity check results (charecters etc.) and send them to somewhere
@@ -476,4 +553,4 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
     monitor_id = os.getenv("DEVICE_ID")
     json_to_socket = sockets_output_former(output, monitor_id)
     ocrsocket.emit('data', json_to_socket)
-    return old_corners
+    return old_corners, old_results_list

@@ -84,6 +84,7 @@ class CameraCapture(object):
         self.vs = None
         # TODO: wrap in try and add default value
         self.monitor_id = os.getenv("DEVICE_ID")
+        self.results_list = []
 
         if not self.onboardingMode: # live-stream mode, will use known boundries
             self.__get_boundries()
@@ -161,9 +162,11 @@ class CameraCapture(object):
             return corners_flag
             # AnalyzeMeasures2.AnalyzeFrame(frame, self.computervision_client)
         else:
-            new_old_corners = AnalyzeFrame.AnalyzeFrame(frame, self.computervision_client, self.boundries, self.areas_of_interes, self.ocrSocket, self.setupMarkersCorners)
+            # new_old_corners = AnalyzeFrame.AnalyzeFrame(frame, self.computervision_client, self.boundries, self.areas_of_interes, self.ocrSocket, self.setupMarkersCorners)
+            new_old_corners, new_results_list = AnalyzeFrame.AnalyzeFrame(frame, self.computervision_client, self.boundries, self.areas_of_interes, self.ocrSocket, self.setupMarkersCorners, self.results_list)
             # TODO: try-except
             self.setupMarkersCorners = new_old_corners
+            self.results_list = new_results_list
             # AnalyzeFrame2.AnalyzeFrame(frame, self.computervision_client, self.boundries)
         return True
 
