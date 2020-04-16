@@ -263,6 +263,8 @@ class CameraCapture(object):
                     response = self.__sendFrameForProcessing(encodedFrame)
                     if response:
                         # if found 4 corners and there's a good mapping - stop and return
+                        self.vs.stopped = True
+                        time.sleep(2)
                         self.vs.stream.release()
                         break
                 else:
