@@ -397,15 +397,22 @@ def fix_readings(readings_dic):
             if rlen >= 3:
                 if read[2] not in [',','.']: # XXX 
                     readings_dic[name] = read[:2] + '.' + read[2:] # mistake: 307 -> 30.7
-        elif name == 'IE':
-            # TODO: add symetric testing
-            print('trying IE, original is:', read)        
+        elif name == 'IE':     
             if rlen >= 2:
-                if read[1] != ':':
-                    read = read[:1] + ':' + read[1:] # mistake: 133 - >1:33
-                if read[-2] != '.':
-                    read = read[:-1] + '.' + read[-1:] # mistake: 1:33 - > 1:3.3
-                readings_dic[name] = read
+                if read[0] == 1 and read[-1] == 1:
+                    continue #we dont know what to do
+                if read[0] == '1': # numbers in format 1:##
+                    if read[1] != ':':
+                        read = read[:1] + ':' + read[1:] # mistake: 133 -> 1:33
+                    if read[-2] != '.':
+                        read = read[:-1] + '.' + read[-1:] # mistake: 1:33 -> 1:3.3
+                    readings_dic[name] = read
+                elif read[-1] == '1': # numbers in format ##:1
+                    if read[-2] != ':':
+                        read = read[:-1] + ':' + read[-1:] # mistake: 331 -> 33:1
+                    if read[1] != '.':
+                        read = read[:1] + '.' + read[1:] # mistake: 33:1 -> 3.3:1
+                    readings_dic[name] = read
     return readings_dic
         
 def isNumber(x):
