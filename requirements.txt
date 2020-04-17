@@ -4,3 +4,5 @@ requests
 azure-cognitiveservices-vision-computervision
 Pillow
 socketIO-client-nexus
+scikit-image
+Levenshtein

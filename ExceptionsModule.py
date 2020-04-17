@@ -4,11 +4,13 @@ VACOVE_UNKNOWN_EXIT_CODE=50
 VACOVE_TOO_MANY_EXCEPTIONS_EXIT_CODE=99
 VACOVE_NO_MONITOR=7
 VACOVE_HTTP_STATUS_CODE_EXIT_CODE=3
+
 class VAOCVError(Exception):
     """
     This is a base class Error for the VideoAnalyticsOpenCV (don't use this)  
     """
     pass
+
 
 class UnknownVAOCVError(VAOCVError):
     """
@@ -21,6 +23,7 @@ class UnknownVAOCVError(VAOCVError):
         """
         self.message = message
 
+
 class OCRSocketVAOCVError(VAOCVError):
     """
     This error is sent when trying to post to a socket for 5 time is failed 
@@ -32,6 +35,7 @@ class OCRSocketVAOCVError(VAOCVError):
         """
         self.message = message
 
+
 class NoMonitorIDVAOCVError(VAOCVError):
     """
     This error is sent when trying to post to a socket for 5 time is failed 
@@ -42,6 +46,8 @@ class NoMonitorIDVAOCVError(VAOCVError):
         as "Unkown Error" by default. Optional.
         """
         self.message = message
+
+
 class TooManyExceptionsVAOCVError(VAOCVError):
     """
     when too many exceptions get to main this exception shold be thrown

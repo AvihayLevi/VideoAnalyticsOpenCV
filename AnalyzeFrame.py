@@ -512,12 +512,9 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
             print("RESPIRATION WARNING:  ", found_warning)
 
     # Pre-Process: TODO: Integrate Gidi's module
-    frame = ImagePreprocess.unsharp(frame)
-    # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    # blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    # rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9,3))
-    # frame = cv2.morphologyEx(gray,cv2.MORPH_TOPHAT, gray)
-
+    # frame = ImagePreprocess.unsharp(frame)
+    frame = ImagePreprocess.filter2d(frame)
+    
     areas_dict = areas_of_interes
     # areas_dict = boundries_to_areas(boundries, frame.shape[0], frame.shape[1])
     areas = create_areas(areas_dict, frame)
@@ -541,7 +538,6 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
     output = create_bounded_output(readings, boundings, transform_boundries(boundries), 3)
     # IMPORTANT: when needed - comment-out next line and change get_boundries accordingly
     # output = fix_readings(output)
-
     
     """
     if len(old_results_list) < 5:
