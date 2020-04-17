@@ -17,6 +17,7 @@ import cv2
 import math
 import numpy as np
 import base64
+from ExceptionsModule import *
 
 
 def order_points(pts):

@@ -21,6 +21,7 @@ import base64
 from Levenshtein import distance as Ldistance
 import operator
 from termcolor import colored
+from ExceptionsModule import *
 
 
 def distance(p1, p2):
@@ -349,10 +350,10 @@ def getVelaModeAndWarning(img, computervision_client):
             boundings[i] = transform_coords(item[1], area)
             i = i + 1
     strings_found = [v.lower().replace(" ", "") for v in readings.values()]
-    print(strings_found)
+    # print(strings_found)
 
     # check mode:
-    known_modes = ["volumesimv","prvca/c"] # buggy mode in purpose
+    known_modes = ["volumesimv","prvca/c"]
     min_mode_distance = 99
     found_mode = "UNKNOWN MODE"
     for item in strings_found:
@@ -363,7 +364,7 @@ def getVelaModeAndWarning(img, computervision_client):
                 min_mode_distance = tmp_mode_dis
                 found_mode = mode
                 # print("update")
-    print(found_mode, min_mode_distance)
+    # print(found_mode, min_mode_distance)
 
     # check warning:
     known_warnings = ["highpip", "lowpip", "circuitdisconnect", "lowve", "apneainterval", "o2inletlow", "checkfilter"]
@@ -377,7 +378,7 @@ def getVelaModeAndWarning(img, computervision_client):
                 min_warning_distance = tmp_warning_dis
                 found_warning = warning
                 # print("update")
-    print(found_warning, min_warning_distance)
+    # print(found_warning, min_warning_distance)
     return found_mode, found_warning
 
 
@@ -510,7 +511,6 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
         if found_warning != "no warning":
             print("RESPIRATION WARNING:  ", found_warning)
 
-
     # Pre-Process: TODO: Integrate Gidi's module
     frame = ImagePreprocess.unsharp(frame)
     # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -542,6 +542,8 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
     # IMPORTANT: when needed - comment-out next line and change get_boundries accordingly
     # output = fix_readings(output)
 
+    
+    """
     if len(old_results_list) < 5:
         old_results_list.append(output) #build "window" of 15 frames
         fixed_result = False
@@ -549,8 +551,8 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
     else:
         old_results_list.pop(0) #remove oldest frame from list
         fixed_result = fix_output(output, old_results_list) 
-        old_results_list.append(output) #add our current result
-    
+        old_results_list.append(output) #add our current resul
+    """
     generic_errors(output, old_results_list)
 
     # print(output)

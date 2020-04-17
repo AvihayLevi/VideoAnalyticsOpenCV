@@ -29,6 +29,7 @@ import AnalyzeMeasures
 # import AnalyzeMeasures2S
 # import AnalyzeFrame2
 from SocketsModule import SocketNamespace
+from ExceptionsModule import *
 
 class CameraCapture(object):
 
