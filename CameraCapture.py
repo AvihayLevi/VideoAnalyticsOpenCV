@@ -261,7 +261,13 @@ class CameraCapture(object):
                 #Send for processing
                 if self.onboardingMode:
                     print('Onboarding mode, will stop stream after 1 frame')
-                    response = self.__sendFrameForProcessing(encodedFrame)
+                    try:
+                        response = self.__sendFrameForProcessing(encodedFrame)
+                    except Exception as e:
+                        self.vs.stopped = True
+                        time.sleep(2)
+                        self.vs.stream.release()
+                        raise(e)
                     if response:
                         # if found 4 corners and there's a good mapping - stop and return
                         self.vs.stopped = True

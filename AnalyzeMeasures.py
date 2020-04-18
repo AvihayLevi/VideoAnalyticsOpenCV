@@ -357,21 +357,27 @@ def AnalyzeMeasures(frame, computervision_client):
     monitor_id = os.getenv("DEVICE_ID")
     json_string = setup_output_former(transformed_coords, areas_dict, b64_encoded_frame, monitor_id, corners)
     url = "https://rstreamapptest.azurewebsites.net/rstream/api/med_equipment"
+    # url = "https://rstreamapptest.azurewebsites.net/rstream/api/med_equipmentdsfsdf"
     headers = {'Content-type':'application/json', 'Accept':'application/json'}
     response = None
     for trail in range(4):
         try:
             print("SENDING")
             response = requests.post(url, data=json_string, headers=headers)
+            if response.status_code != 200:
+                raise(Exception("Bad API Status Code: " + str(response.status_code)))
         except Exception as e:
             print("Exception while posting: ", e)
-            # TODO: throw exception if all trails ended unsuccefuly
             if trail == 3:
-                raise APIMESSetupVAOCVError("Can't Send MES Setup Results via API! Device ID: " + str(monitor_id) + " \n Original Exception: \n" + str(e))
+                if response is not None:
+                    if response.status_code != 200:
+                        raise APIMESSetupVAOCVError("Bad API response to MES Setup! Device ID: " + str(monitor_id) + " \n Status Code: " + str(response.status_code))
+                else:
+                    raise APIMESSetupVAOCVError("Can't Send MES Setup Results via API! Device ID: " + str(monitor_id) + " \n Original Exception: \n" + str(e))
+            time.sleep(1)
             continue
         break
-    if response.status_code != 200:
-        raise APIMESSetupVAOCVError("Bad API response to MES Setup! Device ID: " + str(monitor_id) + " \n Status Code: " + str(response.status_code))
+    print("Sent.")
     return True
 
 

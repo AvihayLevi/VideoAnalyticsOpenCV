@@ -14,6 +14,8 @@ from ExceptionsModule import *
 
 # global counters
 SEND_CALLBACKS = 0
+UNKNOWN_ERROR_CODE = 100
+TOO_MANY_EXCEPTIONS_EXIT_CODE=99
 
 def main(
         videoPath,
@@ -28,7 +30,9 @@ def main(
         resizeHeight=0,
         annotate=False,
         cognitiveServiceKey="",
-        modelId=""
+        modelId="",
+        max_exceptions=-1,
+        num_exceptions=0
 ):
     '''
     Capture a camera feed, send it to processing and forward outputs to EdgeHub
@@ -47,13 +51,47 @@ def main(
     '''
     try:
         print("\nPython %s\n" % sys.version)
-        print("Camera Capture Azure IoT Edge Module. Press Ctrl-C to exit.")
+        print("RStream Video Analyzer. Press Ctrl-C to exit.")
         with CameraCapture(videoPath, onboardingMode, imageProcessingEndpoint, imageProcessingParams, showVideo, verbose, loopVideo, convertToGray, resizeWidth, resizeHeight, annotate, cognitiveServiceKey, modelId) as cameraCapture:
             cameraCapture.start()
-    except KeyboardInterrupt:
-        print("Camera capture module stopped")
-    except APIMESSetupVAOCVError as e:
-        print("API Exception in MES Setup! \n", e)
+    
+    except Exception as e: 
+        print(e)
+        tb = traceback.format_exc()
+        if isinstance(e,KeyboardInterrupt):
+            print("Camera capture module stopped")
+            sys.exit(0)
+        else:
+            exitCode = handleException(e,tb)
+            # Check if exception is from the kind that needs to restart the process localy and make main run again:
+            if (exitCode == -1):
+                if (num_exceptions < max_exceptions or max_exceptions == -1):
+                    print("restatrting CameraCapture after dealing with exception error " + str(e.__class__))
+                    tb = None
+                    num_exceptions += 1
+                    main(videoPath, onboardingMode, imageProcessingEndpoint, imageProcessingEndpoint, showVideo,
+                        verbose, loopVideo, convertToGray, resizeWidth, resizeHeight, annotate,cognitiveServiceKey, modelId, max_exceptions, 
+                        num_exceptions)
+                else:
+                    raise TooManyExceptionsVAOCVError
+            else:
+                sys.exit(exitCode)
+    
+
+def handleException(e,tb):
+    """
+    this function should hanndle any exception but KeyboardInterrupt that happens in CameraCapture,
+    in case there is a known Error a VACOVError should be thrown  
+    """
+    if isinstance(e,VAOCVError):
+        exitCode = handleVAOCVE(e,tb)
+    else: 
+        exitCode = handleUnknownError(e,tb)
+    return exitCode
+    
+
+def handleUnknownError(e,tb):
+    return UNKNOWN_ERROR_CODE
 
 
 def __convertStringToBool(env):
@@ -82,9 +120,10 @@ if __name__ == '__main__':
         ANNOTATE = __convertStringToBool(os.getenv('ANNOTATE', 'False'))
         COGNITIVE_SERVICE_KEY = os.getenv('COGNITIVE_SERVICE_KEY', "")
         MODEL_ID = os.getenv('MODEL_ID', "")
+        MAX_EXCEPTIONS= int(os.getenv('MAX_EXCEPTIONS',-1)) # set the maximum of accepted excpetions handled befor crashing when -1 (default) handle all exceptions 
     except ValueError as error:
         print(error)
         sys.exit(1)
 
     main(VIDEO_PATH, ONBOARDING_MODE, IMAGE_PROCESSING_ENDPOINT, IMAGE_PROCESSING_PARAMS, SHOW_VIDEO,
-         VERBOSE, LOOP_VIDEO, CONVERT_TO_GRAY, RESIZE_WIDTH, RESIZE_HEIGHT, ANNOTATE, COGNITIVE_SERVICE_KEY, MODEL_ID)
+         VERBOSE, LOOP_VIDEO, CONVERT_TO_GRAY, RESIZE_WIDTH, RESIZE_HEIGHT, ANNOTATE, COGNITIVE_SERVICE_KEY, MODEL_ID, MAX_EXCEPTIONS)
