@@ -36,6 +36,18 @@ class OCRSocketVAOCVError(VAOCVError):
         self.message = message
 
 
+class APIMESSetupVAOCVError(VAOCVError):
+    """
+    This error is sent when trying to post to a socket for 5 time is failed 
+    """
+    def __init__(self, message="Failed to send data via OCR"):
+        """
+        :param object message: if you would like to add some info it can be passed with this string 
+        as "Unkown Error" by default. Optional.
+        """
+        self.message = message
+
+
 class NoMonitorIDVAOCVError(VAOCVError):
     """
     This error is sent when trying to post to a socket for 5 time is failed 

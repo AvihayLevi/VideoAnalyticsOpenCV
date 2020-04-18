@@ -9,6 +9,7 @@ import time
 
 import CameraCapture
 from CameraCapture import CameraCapture
+from ExceptionsModule import *
 
 
 # global counters
@@ -51,6 +52,8 @@ def main(
             cameraCapture.start()
     except KeyboardInterrupt:
         print("Camera capture module stopped")
+    except APIMESSetupVAOCVError as e:
+        print("API Exception in MES Setup! \n", e)
 
 
 def __convertStringToBool(env):

@@ -358,19 +358,20 @@ def AnalyzeMeasures(frame, computervision_client):
     json_string = setup_output_former(transformed_coords, areas_dict, b64_encoded_frame, monitor_id, corners)
     url = "https://rstreamapptest.azurewebsites.net/rstream/api/med_equipment"
     headers = {'Content-type':'application/json', 'Accept':'application/json'}
+    response = None
     for trail in range(4):
-        while True:
-            try:
-                print("SENDING")
-                response = requests.post(url, data=json_string, headers=headers)
-            except Exception as e:
-                print("Exception while posting:   |    ", e)
-                # TODO: throw exception if all trails ended unsuccefuly
-                continue
-            break
+        try:
+            print("SENDING")
+            response = requests.post(url, data=json_string, headers=headers)
+        except Exception as e:
+            print("Exception while posting: ", e)
+            # TODO: throw exception if all trails ended unsuccefuly
+            if trail == 3:
+                raise APIMESSetupVAOCVError("Can't Send MES Setup Results via API! Device ID: " + str(monitor_id) + " \n Original Exception: \n" + str(e))
+            continue
         break
-    print(response)     
-    # TODO: sanity check results (charecters etc.) and send them to somewhere
+    if response.status_code != 200:
+        raise APIMESSetupVAOCVError("Bad API response to MES Setup! Device ID: " + str(monitor_id) + " \n Status Code: " + str(response.status_code))
     return True
 
 
