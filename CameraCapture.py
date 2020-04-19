@@ -90,7 +90,9 @@ class CameraCapture(object):
         if not self.onboardingMode: # live-stream mode, will use known boundries
             self.__get_boundries()
             # connect to server
-            socketIO = SocketIO('https://rstream-node.azurewebsites.net', 443, BaseNamespace)
+            # socketIO = SocketIO('https://rstream-node.azurewebsites.net', 443, BaseNamespace)
+            SOCKET_URL = os.getenv("SOCKET_URL")
+            socketIO = SocketIO(SOCKET_URL, 443, BaseNamespace)
             self.ocrSocket = socketIO.define(SocketNamespace, '/ocr')
         
         if self.convertToGray:
@@ -127,7 +129,9 @@ class CameraCapture(object):
         self.computervision_client = ComputerVisionClient(COMPUTER_VISION_ENDPOINT, CognitiveServicesCredentials(COMPUTER_VISION_SUBSCRIPTION_KEY))
 
     def __get_boundries(self):
-        url = "https://rstreamapptest.azurewebsites.net/rstream/api/med_equipment/" + self.monitor_id +"?image=false"
+        API_URL = os.getenv("API_URL")
+        # url = "https://rstreamapptest.azurewebsites.net/rstream/api/med_equipment/" + self.monitor_id +"?image=false"
+        url = API_URL + "/" + self.monitor_id + "?image=false"
         response = requests.get(url)
         json_response = response.text
         dict_response = json.loads(json_response)
