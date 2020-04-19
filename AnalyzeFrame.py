@@ -433,7 +433,30 @@ def isNumber(x):
     except:
         return False
 
-def fix_output(output, results_list):
+def create_hist_dict(result_list):
+    hist_dict = {}
+    for res in result_list:
+        for (key, val) in res.items():
+            if key in hist_dict.keys():
+                if val in hist_dict[key].keys():
+                    hist_dict[key][val] += 1
+                else:
+                    hist_dict[key][val] = 1
+            else:
+                new_dict = {}
+                new_dict[val] = 1
+                hist_dict[key] = new_dict
+    return(hist_dict)
+
+def histogram_out(result_list, key, k):
+    hist_dict = create_hist_dict(result_list)
+    best = max(hist_dict[key].items(), key=operator.itemgetter(1))
+    if (best[1] >= k and best[0] != "N/A"): 
+        return best[0]
+    else:
+        return None
+
+def fix_output(output, results_list, k):
     new_output = output.copy()
     for key, val in output.items():
         new_val = val
@@ -447,7 +470,10 @@ def fix_output(output, results_list):
         if val == "N/A":
             new_val = last_val
         else:
-            if isNumber(val) and isNumber(last_val): 
+            hist_out = histogram_out(results_list, key, k)
+            if hist_out:
+                new_val = hist_out
+            elif isNumber(val) and isNumber(last_val): 
                 if abs(float(val)-float(last_val)) > 0.5 * float(val):
                     new_val = last_val
                     older_val = None
@@ -553,17 +579,20 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
     
     output = create_bounded_output(readings, boundings, transform_boundries(boundries), 3)
     # IMPORTANT: when needed - comment-out next line and change get_boundries accordingly
+    # Fix Readings based on known measures format:
     # output = fix_readings(output)
     
     """
-    if len(old_results_list) < 5:
+    k_frames_to_save = 5
+    if len(old_results_list) < k_frames_to_save:
         old_results_list.append(output) #build "window" of 15 frames
         fixed_result = False
     #return last_results #just append, less than 15 frames seen
     else:
         old_results_list.pop(0) #remove oldest frame from list
-        fixed_result = fix_output(output, old_results_list) 
-        old_results_list.append(output) #add our current resul
+        fixed_result = fix_output(output, old_results_list, k_frames_to_save-1) 
+        old_results_list.append(output) #add our current result
+        output = fixed_result
     """
     generic_errors(output, old_results_list)
 
