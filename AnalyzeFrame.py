@@ -523,10 +523,15 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
     readings = {}
     boundings = {}
     i = 0
+    CV_MODEL = os.getenv("CV_MODEL")
     for area in areas:
         try:
-            results = get_digits(cv2.imencode(".jpg", area[0])[1], computervision_client, "digits")
-            # results = get_ala_digits(cv2.imencode(".jpg", area[0])[1])
+            if CV_MODEL == "MSOCR":
+                results = get_digits(cv2.imencode(".jpg", area[0])[1], computervision_client, "digits")
+            # elif CV_MODEL == "ALA":
+                # results = get_ala_digits(cv2.imencode(".jpg", area[0])[1])
+            else:
+                raise Exception("UNRECOGNIZED MODEL")
         except Exception as e:
             print(e)
             continue
@@ -558,4 +563,7 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
     monitor_id = os.getenv("DEVICE_ID")
     json_to_socket = sockets_output_former(output, monitor_id)
     ocrsocket.emit('data', json_to_socket)
+
+    FRAME_DELAY = os.getenv("FRAME_DELAY")
+    time.sleep(float(FRAME_DELAY))
     return old_corners, old_results_list
