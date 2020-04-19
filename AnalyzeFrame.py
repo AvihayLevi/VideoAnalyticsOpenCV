@@ -20,7 +20,7 @@ import ImagePreprocess
 import base64
 from Levenshtein import distance as Ldistance
 import operator
-from termcolor import colored
+# from termcolor import colored
 from ExceptionsModule import *
 
 
@@ -239,6 +239,7 @@ def sockets_output_former(ocr_res, mon_id):
     json_dict["JsonData"] = ocr_res
     json_dict["DeviceID"] = mon_id
     json_dict["deviceType"] = os.getenv("DEVICE_TYPE")
+    json_dict["gilayon_num"] = os.getenv("GILAYON_NUM")
     output = json.dumps(json_dict)
     print(output)
     return output
@@ -460,11 +461,11 @@ def generic_errors(output, last_results):
     if miss_count>0:
         if miss_count>=0.5*len(output):
             if miss_count>=0.75*len(output):
-                print(colored("Fatal error, almost no data in format","red"))
+                print("Fatal error, almost no data in format")
             else:
-                print(colored("Error, most data not in format","red"))
+                print("Error, most data not in format","red")
         else:
-            print(colored("Mild error, some missing fields","yellow"))
+            print("Mild error, some missing fields","yellow")
     missing_dict = {}
     amount_of_results = len(last_results)
     for res in last_results:
@@ -479,7 +480,7 @@ def generic_errors(output, last_results):
         if value == amount_of_results:
             completely_missing_vals.append(key)
     if len(completely_missing_vals) > 0:
-        print(colored("Error, ","red"), completely_missing_vals, colored("are missing from the last ","red"), amount_of_results, colored("frames!","red"))
+        print("Error, ", completely_missing_vals, "are missing from the last ", amount_of_results, "frames!")
     return
 
 
