@@ -40,7 +40,19 @@ class APIMESSetupVAOCVError(VAOCVError):
     """
     This error is sent when trying to post to a socket for 5 time is failed 
     """
-    def __init__(self, message="Failed to send data via OCR"):
+    def __init__(self, message="Failed to send MES Results via API"):
+        """
+        :param object message: if you would like to add some info it can be passed with this string 
+        as "Unkown Error" by default. Optional.
+        """
+        self.message = message
+
+
+class EnvVarsVAOCVError(VAOCVError):
+    """
+    This error is sent when trying to post to a socket for 5 time is failed 
+    """
+    def __init__(self, message="Failed to Load Enviroment Variables"):
         """
         :param object message: if you would like to add some info it can be passed with this string 
         as "Unkown Error" by default. Optional.
@@ -66,6 +78,8 @@ class TooManyExceptionsVAOCVError(VAOCVError):
     """
     def __init__(self, message="no monidtor id"):
         self.expression=message
+
+
 def handleVAOCVE(e,tb):
     """ 
     param: tb, a traceback of the stack

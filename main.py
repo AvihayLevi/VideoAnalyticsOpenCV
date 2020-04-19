@@ -104,7 +104,30 @@ def __convertStringToBool(env):
 
 
 if __name__ == '__main__':
-    # TODO: read deviceID from the POD's input and inject as enviroment variable "DEVICE_ID"
+    # Check if all Enviroment Variables passed:
+    try:
+        API_URL = os.getenv('API_URL', "")
+        SOCKET_URL = os.getenv('SOCKET_URL', "")
+        CV_MODEL = os.getenv('CV_MODEL', "")
+        FRAME_DELAY = os.getenv('FRAME_DELAY', "")
+        VIDEO_PATH = os.getenv('VIDEO_PATH', "")
+        ONBOARDING_MODE = os.getenv('ONBOARDING_MODE', "")
+        COMPUTER_VISION_SUBSCRIPTION_KEY = os.getenv('COMPUTER_VISION_SUBSCRIPTION_KEY', "")
+        COMPUTER_VISION_ENDPOINT = os.getenv('COMPUTER_VISION_ENDPOINT', "")
+        DEVICE_ID = os.getenv('DEVICE_ID', "")
+
+        env_vars_list = [API_URL, SOCKET_URL, CV_MODEL, FRAME_DELAY, VIDEO_PATH, ONBOARDING_MODE, COMPUTER_VISION_SUBSCRIPTION_KEY, COMPUTER_VISION_ENDPOINT, DEVICE_ID]
+        if "" in env_vars_list:
+            print("Missing Enviroment Variable in [API_URL, SOCKET_URL, CV_MODEL, FRAME_DELAY, VIDEO_PATH, ONBOARDING_MODE, COMPUTER_VISION_SUBSCRIPTION_KEY, COMPUTER_VISION_ENDPOINT, DEVICE_ID]: \n", \
+                 [API_URL, SOCKET_URL, CV_MODEL, FRAME_DELAY, VIDEO_PATH, ONBOARDING_MODE, "SECRET-Not-Printing", COMPUTER_VISION_ENDPOINT, DEVICE_ID])
+            raise EnvVarsVAOCVError("Not all Enviroment Variables passed succesfuly")
+    except EnvVarsVAOCVError as e:
+        print(e)
+        sys.exit(1)
+    except Exception as e:
+        print("UNKNOWN ERROR: ", e)
+        sys.exit(1)
+    
     try:
         VIDEO_PATH = os.environ['VIDEO_PATH']
         print("Vid Path", VIDEO_PATH)
@@ -120,7 +143,7 @@ if __name__ == '__main__':
         ANNOTATE = __convertStringToBool(os.getenv('ANNOTATE', 'False'))
         COGNITIVE_SERVICE_KEY = os.getenv('COGNITIVE_SERVICE_KEY', "")
         MODEL_ID = os.getenv('MODEL_ID', "")
-        MAX_EXCEPTIONS= int(os.getenv('MAX_EXCEPTIONS',-1)) # set the maximum of accepted excpetions handled befor crashing when -1 (default) handle all exceptions 
+        MAX_EXCEPTIONS = int(os.getenv('MAX_EXCEPTIONS',-1)) # set the maximum of accepted excpetions handled befor crashing when -1 (default) handle all exceptions 
     except ValueError as error:
         print(error)
         sys.exit(1)
