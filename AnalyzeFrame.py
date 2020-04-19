@@ -336,9 +336,19 @@ def boundries_to_areas(boundries, hight, width):
     return areas
 
 
-def getVelaModeAndWarning(img, computervision_client):
-    #TODO: change w.r.t cropped image
-    top_area = {"mode": [0, 0.35, 0, 0.4], "warning": [0, 0.35, 0.55, 1]}
+def getVelaModeAndWarning(img, marker_corners, computervision_client):  
+    s = img.shape
+    height, width = s[0], s[1]
+    two_top_markers = sorted(marker_corners, key=lambda tup: tup[1])[:2] # get 2 top markers
+    left_corner, right_corner = sorted(two_top_markers, key=lambda tup: tup[0])[0] , sorted(two_top_markers, key=lambda tup: tup[0])[1] #get left and right
+    
+    x_range = [left_corner[0] / width , right_corner[0] / width ] # x range in form of [left_x, right_x]
+    y_range = [0, (max(left_corner[1],right_corner[1]) / height) + 0.1] # y range in form of [0, y_top_corners + 10% of frame height
+    experiment_area = {"mode_warning": [y_range[0], y_range[1], x_range[0], x_range[1]]}
+    # print('experiment_area:', experiment_area)
+    
+    #top_area = {"mode": [0, 0.35, 0, 0.4], "warning": [0, 0.35, 0.55, 1]}
+    top_area = experiment_area    
     areas = create_areas(top_area, img)
     readings = {}
     boundings = {}
@@ -505,7 +515,7 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
     
     device_type = os.getenv("DEVICE_TYPE")
     if device_type == "respiration":
-        found_mode, found_warning = getVelaModeAndWarning(orig_frame, computervision_client)
+        found_mode, found_warning = getVelaModeAndWarning(orig_frame, fixed_corners, computervision_client)
         if found_mode != "volumesimv":
             print("UNKNOWN MODE DETECTED!!")
             # TODO: try again and raise exception
