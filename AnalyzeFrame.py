@@ -234,12 +234,13 @@ def fix_string(s):
     return json_string_fin
 
 
-def sockets_output_former(ocr_res, mon_id, medical_warning, mode_warning):
+def sockets_output_former(ocr_res, mon_id, medical_warning, mode_warning, results_warning):
     json_dict = {}
     json_dict["JsonData"] = ocr_res
     json_dict["DeviceID"] = mon_id
     json_dict["medicalWarning"] = medical_warning
     json_dict["modeWarning"] = mode_warning
+    json_dict["resultsWarning"] = results_warning
     json_dict["deviceType"] = os.getenv("DEVICE_TYPE")
     json_dict["gilayon_num"] = os.getenv("GILAYON_NUM")
     output = json.dumps(json_dict)
@@ -492,13 +493,15 @@ def fix_output(output, results_list, k):
             
 
 def generic_errors(output, last_results):
+    results_warning = None
     miss_count = 0
     for key, value in output.items():
         if value == "N/A":
             miss_count += 1
-    if miss_count>0:
-        if miss_count>=0.5*len(output):
-            if miss_count>=0.75*len(output):
+    if miss_count > 0:
+        if miss_count >= 0.5*len(output):
+            results_warning = "WARNING"
+            if miss_count >= 0.75*len(output):
                 print("Fatal error, almost no data in format")
             else:
                 print("Error, most data not in format","red")
@@ -519,7 +522,7 @@ def generic_errors(output, last_results):
             completely_missing_vals.append(key)
     if len(completely_missing_vals) > 0:
         print("Error, ", completely_missing_vals, "are missing from the last ", amount_of_results, "frames!")
-    return
+    return results_warning
 
 
 def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes, ocrsocket, last_four_corners, old_results_list):
@@ -590,16 +593,18 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
     """
     k_frames_to_save = 5
     if len(old_results_list) < k_frames_to_save:
-        old_results_list.append(output) #build "window" of 15 frames
+        old_results_list.append(output) #build "window" of 5 frames
         fixed_result = False
-    #return last_results #just append, less than 15 frames seen
+    #return last_results #just append, less than 5 frames seen
     else:
         old_results_list.pop(0) #remove oldest frame from list
         fixed_result = fix_output(output, old_results_list, k_frames_to_save-1) 
         old_results_list.append(output) #add our current result
         output = fixed_result
     """
-    generic_errors(output, old_results_list)
+    results_warning = None
+    results_warning = generic_errors(output, old_results_list)
+    # print("Results Warning: ", results_warning)
 
     # print(output)
 
@@ -607,7 +612,7 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
 
     
     monitor_id = os.getenv("DEVICE_ID")
-    json_to_socket = sockets_output_former(output, monitor_id, medical_warning, mode_warning)
+    json_to_socket = sockets_output_former(output, monitor_id, medical_warning, mode_warning, results_warning)
     ocrsocket.emit('data', json_to_socket)
 
     FRAME_DELAY = os.getenv("FRAME_DELAY")
