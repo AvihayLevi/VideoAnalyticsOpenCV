@@ -234,11 +234,11 @@ def fix_string(s):
     return json_string_fin
 
 
-def sockets_output_former(ocr_res, mon_id, device_warning, mode_warning):
+def sockets_output_former(ocr_res, mon_id, medical_warning, mode_warning):
     json_dict = {}
     json_dict["JsonData"] = ocr_res
     json_dict["DeviceID"] = mon_id
-    json_dict["deviceWarning"] = device_warning
+    json_dict["medicalWarning"] = medical_warning
     json_dict["modeWarning"] = mode_warning
     json_dict["deviceType"] = os.getenv("DEVICE_TYPE")
     json_dict["gilayon_num"] = os.getenv("GILAYON_NUM")
@@ -540,8 +540,8 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
         fixed_corners = new_corners
     frame = four_point_transform(frame, fixed_corners)
     
-    found_warning = "no warning"
-    mode_warning = "no warning"
+    mode_warning = None
+    medical_warning = None
     device_type = os.getenv("DEVICE_TYPE")
     if device_type == "respiration":
         found_mode, found_warning = getVelaModeAndWarning(orig_frame, fixed_corners, computervision_client)
@@ -549,7 +549,8 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
             mode_warning = "WARNING"
             # print("UNKNOWN MODE DETECTED!!")
             # TODO: try again and raise exception
-        # if found_warning != "no warning":
+        if found_warning != "no warning":
+            medical_warning = found_warning
             # print("RESPIRATION WARNING:  ", found_warning)
 
     # Pre-Process: TODO: Integrate Gidi's module
@@ -606,7 +607,7 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
 
     
     monitor_id = os.getenv("DEVICE_ID")
-    json_to_socket = sockets_output_former(output, monitor_id, found_warning, mode_warning)
+    json_to_socket = sockets_output_former(output, monitor_id, medical_warning, mode_warning)
     ocrsocket.emit('data', json_to_socket)
 
     FRAME_DELAY = os.getenv("FRAME_DELAY")
