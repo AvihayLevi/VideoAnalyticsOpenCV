@@ -285,7 +285,7 @@ class CameraCapture(object):
                         self.vs.stream.release()
                         raise(e)
 
-                # response = self.__sendFrameForProcessing(encodedFrame)
+                
                 if self.verbose:
                     print("Time to process frame externally: " + self.__displayTimeDifferenceInMs(time.time(), startProcessingExternally))
                     startSendingToEdgeHub = time.time()
