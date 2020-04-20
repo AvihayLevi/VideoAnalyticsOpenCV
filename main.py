@@ -10,7 +10,8 @@ import time
 import CameraCapture
 from CameraCapture import CameraCapture
 from ExceptionsModule import *
-
+from socketIO_client_nexus import SocketIO, BaseNamespace
+from SocketsModule import SocketNamespace
 
 # global counters
 SEND_CALLBACKS = 0
@@ -62,6 +63,12 @@ def main(
             print("Camera capture module stopped")
             sys.exit(0)
         else:
+            socketIO = SocketIO(SOCKET_URL, 443, BaseNamespace)
+            ocrSocket = socketIO.define(SocketNamespace, '/ocr')
+            exitCode = handleException(e,tb,DEVICE_ID,ocrSocket)
+            # Check if exception is from the kind that needs to restart the process localy and make main run again
+            sys.exit(exitCode)
+            """
             exitCode = handleException(e,tb)
             # Check if exception is from the kind that needs to restart the process localy and make main run again:
             if (exitCode == -1):
@@ -76,21 +83,22 @@ def main(
                     raise TooManyExceptionsVAOCVError
             else:
                 sys.exit(exitCode)
+            """
     
-
-def handleException(e,tb):
+    
+def handleException(e,tb,monitor_id,ocrSocket):
     """
     this function should hanndle any exception but KeyboardInterrupt that happens in CameraCapture,
     in case there is a known Error a VACOVError should be thrown  
     """
     if isinstance(e,VAOCVError):
-        exitCode = handleVAOCVE(e,tb)
+        exitCode = handleVAOCVE(e,tb,monitor_id,ocrSocket)
     else: 
-        exitCode = handleUnknownError(e,tb)
+        exitCode = handleUnknownError(e,tb,monitor_id,ocrSocket)
     return exitCode
-    
 
-def handleUnknownError(e,tb):
+
+def handleUnknownError(e,tb,monitor_id,ocrSocket):
     return UNKNOWN_ERROR_CODE
 
 

@@ -253,10 +253,14 @@ def get_digits(img, computervision_client, mode="digits"):
     # tmp_frame = cv2.imdecode(np.frombuffer(img, np.uint8), -1)
     # cv2.imshow("image", tmp_frame)
     # cv2.waitKey(0)
-    recognize_printed_results = computervision_client.batch_read_file_in_stream(io.BytesIO(img), raw = True)
-    # Reading OCR results
-    operation_location_remote = recognize_printed_results.headers["Operation-Location"]
-    operation_id = operation_location_remote.split("/")[-1]
+    try:
+        recognize_printed_results = computervision_client.batch_read_file_in_stream(io.BytesIO(img), raw = True)
+        # Reading OCR results
+        operation_location_remote = recognize_printed_results.headers["Operation-Location"]
+        operation_id = operation_location_remote.split("/")[-1]
+    except Exception as e:
+        print("MSOCR Cognitive Service Exception! \n", e)
+        raise MSOCRServiceVAOCVError
     while True:
         get_printed_text_results = computervision_client.get_read_operation_result(operation_id)
         if get_printed_text_results.status not in ['NotStarted', 'Running']:

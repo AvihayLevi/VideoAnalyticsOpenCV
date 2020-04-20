@@ -133,10 +133,12 @@ def find_best_windows(computervision_client, warped_frame, num_of_windows = 2):
     min_size = min_x * min_y  # min_size is set to be 3% y times 2.5%x
     
     #horizontal w?ndows
-    step_size = math.ceil(s[1] / 10)
+    # Avihay changed from 1/10 to 1/8:
+    step_size = math.ceil(s[1] / 8)
     winH, winW =  math.ceil(0.3*s[0]), s[1] #define horizontal sliding window size to be 0.3Y by X
     for (x, y, window) in sliding_up_window(warped_frame, step_size, window_size=(winW, winH)):
       temp_results = get_digits_FBW(window, computervision_client)
+      # print("HERE!", temp_results)
       temp_results = [x for x in temp_results if ((x[1][4] - x[1][0]) * (x[1][5] - x[1][1])) > min_size and abs(x[1][4] - x[1][0]) > min_x and  abs(x[1][5] - x[1][1]) > min_y] # filter all results smaller than min size
       temp_score = len(temp_results)
       if temp_score > best_score_h:

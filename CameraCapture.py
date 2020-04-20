@@ -114,8 +114,6 @@ class CameraCapture(object):
             print("   - Resize width: " + str(self.resizeWidth))
             print("   - Resize height: " + str(self.resizeHeight))
             print("   - Annotate: " + str(self.annotate))
-            print("   - Cognitive Service Key: " + self.cognitiveServiceKey)
-            print("   - Model Id: " + self.modelId)
             print()
         
         self.displayFrame = None
@@ -279,7 +277,13 @@ class CameraCapture(object):
                         self.vs.stream.release()
                         break
                 else:
-                    response = self.__sendFrameForProcessing(encodedFrame)
+                    try:
+                        response = self.__sendFrameForProcessing(encodedFrame)
+                    except Exception as e:
+                        self.vs.stopped = True
+                        time.sleep(2)
+                        self.vs.stream.release()
+                        raise(e)
 
                 # response = self.__sendFrameForProcessing(encodedFrame)
                 if self.verbose:
