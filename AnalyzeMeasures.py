@@ -118,7 +118,14 @@ def sliding_up_window(image, step_size, window_size):
         continue
 
 
-def find_best_windows(computervision_client, warped_frame, num_of_windows = 2):
+def find_best_windows(computervision_client, warped_frame, mode, num_of_windows = 2): #windos in format [y_down, y_up, x_left, x_right]
+    #simple mode, fixed size
+    if mode == 'simple': #we know the windows size
+        bottom_window = [0.6, 1, 0, 1]
+        left_window = [0, 1, 0, 0.35]
+        right_window= [0, 1, 0.65, 1]
+        return [bottom_window, right_window, left_window]
+    
     # Pre Process:
     gray = cv2.cvtColor(warped_frame, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -129,7 +136,7 @@ def find_best_windows(computervision_client, warped_frame, num_of_windows = 2):
     best_score_v, best_score_h = 0, 0
     best_window_v, best_window_h= [], []
     s = warped_frame.shape
-    min_x, min_y = s[1]/40, s[0]/30
+    min_x, min_y = s[1]/40, s[0]/40
     min_size = min_x * min_y  # min_size is set to be 3% y times 2.5%x
     
     #horizontal w?ndows
@@ -303,10 +310,10 @@ def get_digits(img, computervision_client):
 
 
 def is_same_bounding(boundings_1, boundings_2): #bounding in form of (top_left_coords, bottom_right_coords)
-    output = abs(boundings_1[0][0] - boundings_2[0][0]) < 15
-    output = output and abs(boundings_1[0][1] - boundings_2[0][1]) < 15
-    output = output and abs(boundings_1[1][0] - boundings_2[1][0]) < 15
-    output = output and abs(boundings_1[1][1] - boundings_2[1][1]) < 15
+    output = abs(boundings_1[0][0] - boundings_2[0][0]) < 17
+    output = output and abs(boundings_1[0][1] - boundings_2[0][1]) < 17
+    output = output and abs(boundings_1[1][0] - boundings_2[1][0]) < 17
+    output = output and abs(boundings_1[1][1] - boundings_2[1][1]) < 17
     return output 
 
 
@@ -331,7 +338,7 @@ def AnalyzeMeasures(frame, computervision_client):
         return False
     frame = four_point_transform(frame, corners)
 
-    areas_of_intrest = find_best_windows(computervision_client, frame, 2) #find best windows
+    areas_of_intrest = find_best_windows(computervision_client, frame, "simple", 2) #find best windows
     areas_dict = {i:area for i,area in enumerate(areas_of_intrest)} #transform into dictionary of bounderies
     areas = create_areas(areas_dict, frame)
 

@@ -68,22 +68,6 @@ def main(
             exitCode = handleException(e,tb,DEVICE_ID,ocrSocket)
             # Check if exception is from the kind that needs to restart the process localy and make main run again
             sys.exit(exitCode)
-            """
-            exitCode = handleException(e,tb)
-            # Check if exception is from the kind that needs to restart the process localy and make main run again:
-            if (exitCode == -1):
-                if (num_exceptions < max_exceptions or max_exceptions == -1):
-                    print("restatrting CameraCapture after dealing with exception error " + str(e.__class__))
-                    tb = None
-                    num_exceptions += 1
-                    main(videoPath, onboardingMode, imageProcessingEndpoint, imageProcessingEndpoint, showVideo,
-                        verbose, loopVideo, convertToGray, resizeWidth, resizeHeight, annotate,cognitiveServiceKey, modelId, max_exceptions, 
-                        num_exceptions)
-                else:
-                    raise TooManyExceptionsVAOCVError
-            else:
-                sys.exit(exitCode)
-            """
     
     
 def handleException(e,tb,monitor_id,ocrSocket):
