@@ -241,6 +241,7 @@ def sockets_output_former(ocr_res, mon_id, medical_warning, mode_warning, result
     json_dict["medicalWarning"] = medical_warning
     json_dict["modeWarning"] = mode_warning
     json_dict["resultsWarning"] = results_warning
+    json_dict["error"] = None
     json_dict["deviceType"] = os.getenv("DEVICE_TYPE")
     json_dict["gilayon_num"] = os.getenv("GILAYON_NUM")
     output = json.dumps(json_dict)
