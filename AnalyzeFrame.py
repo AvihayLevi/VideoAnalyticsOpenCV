@@ -561,8 +561,8 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
             # print("RESPIRATION WARNING:  ", found_warning)
 
     # Pre-Process: TODO: Integrate Gidi's module
-    # frame = ImagePreprocess.unsharp(frame)
-    frame = ImagePreprocess.filter2d(frame)
+    frame = ImagePreprocess.unsharp(frame)
+    # frame = ImagePreprocess.filter2d(frame)
     
     areas_dict = areas_of_interes
     # areas_dict = boundries_to_areas(boundries, frame.shape[0], frame.shape[1])

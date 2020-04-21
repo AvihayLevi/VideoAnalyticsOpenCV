@@ -62,7 +62,7 @@ class MSOCRServiceVAOCVError(VAOCVError):
         self.error_string = "NO_MSOCR_CONNECTION"
 
 
-class VideoStreamProblemVAOCVError(VAOCVError):
+class VideoStreamInitProblemVAOCVError(VAOCVError):
     """
     This error is sent when the video stream cannot be opened 
     """
@@ -78,22 +78,20 @@ class VideoStreamProblemVAOCVError(VAOCVError):
         self.error_string = "NO_INIT_STREAM"
 
 
-class StreamStoppedVAOCVError(VAOCVError):
-    def __init__(self, message="Stream stopped"):
+class VideoStreamReadProblemVAOCVError(VAOCVError):
+    """
+    This error is sent when the video stream cannot be opened 
+    """
+    def __init__(self, message="Failed to initialize video stream"):
+        """
+        :param object message: if you would like to add some info it can be passed with this string 
+        as "Unkown Error" by default. Optional.
+        """
         self.expression = message
         self.send_socket = True
         self.send_api = True
         self.exit_code = 2
         self.error_string = "STREAM_STOPPED"
-   
-        
-class NoInitStreamVAOCVError(VAOCVError):
-    def __init__(self, message="Stream stopped"):
-        self.expression = message
-        self.send_socket = True
-        self.send_api = True
-        self.exit_code = 1
-        self.error_string = "NO_INIT_STREAM"
 
 
 class OCRSocketVAOCVError(VAOCVError):
@@ -124,8 +122,24 @@ class APIMESSetupVAOCVError(VAOCVError):
         self.expression = message
         self.send_socket = True
         self.send_api = True
-        self.exit_code = 8
-        self.error_string = "API_MES_SETUP"
+        self.exit_code = 3
+        self.error_string = "API_MES_SETUP_FAILURE"
+
+
+class APIMESSetupStatusCodeVAOCVError(VAOCVError):
+    """
+    This error is sent when trying to post to a socket for 5 time is failed 
+    """
+    def __init__(self, message="Bas Response when sending MES Results via API"):
+        """
+        :param object message: if you would like to add some info it can be passed with this string 
+        as "Unkown Error" by default. Optional.
+        """
+        self.expression = message
+        self.send_socket = True
+        self.send_api = True
+        self.exit_code = 3
+        self.error_string = "API_MES_SETUP_STATUS_CODE_FAILURE"
 
 
 class EnvVarsVAOCVError(VAOCVError):

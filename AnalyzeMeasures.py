@@ -380,7 +380,7 @@ def AnalyzeMeasures(frame, computervision_client):
             if trail == 3:
                 if response is not None:
                     if response.status_code != 200:
-                        raise APIMESSetupVAOCVError("Bad API response to MES Setup! Device ID: " + str(monitor_id) + " \n Status Code: " + str(response.status_code))
+                        raise APIMESSetupStatusCodeVAOCVError("Bad API response to MES Setup! Device ID: " + str(monitor_id) + " \n Status Code: " + str(response.status_code))
                 else:
                     raise APIMESSetupVAOCVError("Can't Send MES Setup Results via API! Device ID: " + str(monitor_id) + " \n Original Exception: \n" + str(e))
             time.sleep(1)
