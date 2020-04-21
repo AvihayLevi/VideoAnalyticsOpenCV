@@ -62,11 +62,14 @@ def main(
         if isinstance(e,KeyboardInterrupt):
             print("Camera capture module stopped")
             sys.exit(0)
+        # TODO: make it more generic - excep VAOCVE error and if so - check e.send_socket
+        elif isinstance(e, OCRSocketVAOCVError) or isinstance(e, SocketInitVAOCVError):
+            exitCode = handleException(e,tb,DEVICE_ID,None)
+            sys.exit(exitCode)
         else:
             socketIO = SocketIO(SOCKET_URL, 443, BaseNamespace)
             ocrSocket = socketIO.define(SocketNamespace, '/ocr')
             exitCode = handleException(e,tb,DEVICE_ID,ocrSocket)
-            # Check if exception is from the kind that needs to restart the process localy and make main run again
             sys.exit(exitCode)
     
     

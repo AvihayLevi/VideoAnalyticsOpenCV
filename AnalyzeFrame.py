@@ -612,14 +612,21 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
     # print("Results Warning: ", results_warning)
 
     # print(output)
-
-    # TODO: pass errors, warnings and medical warnings via socket
-
     
     monitor_id = os.getenv("DEVICE_ID")
     json_to_socket = sockets_output_former(output, monitor_id, medical_warning, mode_warning, results_warning)
-    ocrsocket.emit('data', json_to_socket)
-
+    for trail in range(4):
+        try:
+            ocrsocket.emit('data', json_to_socket)
+        except:
+            if trail == 3:
+                print("raising exception , no socket")
+                raise OCRSocketVAOCVError("Can't emit OCR results to socket")
+            else:
+                print("trying again")
+                time.sleep(1)
+                continue
+        break
     FRAME_DELAY = os.getenv("FRAME_DELAY")
     time.sleep(float(FRAME_DELAY))
     return old_corners, old_results_list

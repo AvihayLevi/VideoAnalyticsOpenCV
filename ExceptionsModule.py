@@ -58,7 +58,7 @@ class MSOCRServiceVAOCVError(VAOCVError):
         self.expression = message
         self.send_socket = True
         self.send_api = True
-        self.exit_code = 20
+        self.exit_code = 4
         self.error_string = "NO_MSOCR_CONNECTION"
 
 
@@ -106,8 +106,24 @@ class OCRSocketVAOCVError(VAOCVError):
         self.expression = message
         self.send_socket = False
         self.send_api = True
-        self.exit_code = 3
-        self.error_string = "NO_UI_CONNECTION"
+        self.exit_code = 10
+        self.error_string = "UI_CONNECTION_LOST"
+
+
+class SocketInitVAOCVError(VAOCVError):
+    """
+    This error is sent when trying to post to a socket for 5 time is failed 
+    """
+    def __init__(self, message="Failed to send data via OCR"):
+        """
+        :param object message: if you would like to add some info it can be passed with this string 
+        as "Unkown Error" by default. Optional.
+        """
+        self.expression = message
+        self.send_socket = False
+        self.send_api = True
+        self.exit_code = 11
+        self.error_string = "NO_UI_INIT_CONNECTION"
 
 
 class APIMESSetupVAOCVError(VAOCVError):

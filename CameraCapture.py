@@ -92,8 +92,13 @@ class CameraCapture(object):
             # connect to server
             # socketIO = SocketIO('https://rstream-node.azurewebsites.net', 443, BaseNamespace)
             SOCKET_URL = os.getenv("SOCKET_URL")
-            socketIO = SocketIO(SOCKET_URL, 443, BaseNamespace)
-            self.ocrSocket = socketIO.define(SocketNamespace, '/ocr')
+            try:
+                socketIO = SocketIO(SOCKET_URL, 443, BaseNamespace, False)
+                time.sleep(3)
+                self.ocrSocket = socketIO.define(SocketNamespace, '/ocr')
+            except:
+                print("Failed to open socket!")
+                raise SocketInitVAOCVError("Can't establish a connection to the socket")
         
         if self.convertToGray:
             self.nbOfPreprocessingSteps +=1
@@ -128,7 +133,6 @@ class CameraCapture(object):
 
     def __get_boundries(self):
         API_URL = os.getenv("API_URL")
-        # url = "https://rstreamapptest.azurewebsites.net/rstream/api/med_equipment/" + self.monitor_id +"?image=false"
         url = API_URL + "/" + self.monitor_id + "?image=false"
         response = requests.get(url)
         json_response = response.text
