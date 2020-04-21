@@ -11,12 +11,16 @@ VACOVE_TOO_MANY_EXCEPTIONS_EXIT_CODE=99
 VACOVE_NO_MONITOR=7
 VACOVE_HTTP_STATUS_CODE_EXIT_CODE=3
 
+"""
 def getCVMNGADDRESS():
     api_url_unclean = os.getenv('API_URL')
+    print(api_url_unclean)
     api_url=api_url_unclean.split("/api")[0]+"/api/cv_mng"
+    print(api_url)
     return api_url
 
 CV_MNG_ADDRESS=getCVMNGADDRESS()
+"""
 
 
 class VAOCVError(Exception):
@@ -214,6 +218,32 @@ class HttpFailedToSendErrorVAOCVError(VAOCVError):
         self.error_string = "HTTP_FAILED_SEND"
 
 
+class HttpResultsWrongCodeVAOCVError(VAOCVError):
+    def __init__(self, message="http results wrong code"):
+        self.expression = message
+        self.send_socket = True 
+        self.send_api = True
+        self.exit_code = 6
+        self.error_string = "HTTP_RESULTS_WRONG_CODE"
+
+
+class HttpCantGetResultsVAOCVError(VAOCVError):
+    def __init__(self, message="can't get results"):
+        self.expression = message
+        self.send_socket = True 
+        self.send_api = True
+        self.exit_code = 7
+        self.error_string = "HTTP_CAN_NOT_GET_RESULTS"
+
+
+class HttpResultsAreEmptyOrMissingVAOCVError(VAOCVError):
+    def __init__(self, message="One or More required field are Empty or Missing"):
+        self.expression = message
+        self.send_socket = True 
+        self.send_api = True
+        self.exit_code = 8
+        self.error_string = "REQUIRED_FIELD_EMPTY_OR_MISSING"
+
 class HttpBoundriesVAOCVError(VAOCVError):
     def __init__(self, message="can't get boundires"):
         self.expression = message
@@ -254,7 +284,14 @@ def sendFailureSocket(equipment_id,error,ocrSocket):
         return False 
 
 
-def cvMngPost(equipment_id,error,url=CV_MNG_ADDRESS):
+def getCVMNGADDRESS():
+    api_url_unclean = os.getenv('API_URL')
+    api_url=api_url_unclean.split("/api")[0]+"/api/cv_mng"
+    return api_url
+
+
+def cvMngPost(equipment_id,error):
+    url = getCVMNGADDRESS()
     str_eid=str(equipment_id)
     str_error=str(error)
     for _ in range(4):
