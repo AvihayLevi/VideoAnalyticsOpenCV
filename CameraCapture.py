@@ -179,6 +179,22 @@ class CameraCapture(object):
 
     
     def __enter__(self):
+        try:
+            for i in range(4):
+                cap = cv2.VideoCapture(self.videoPath)
+                if cap.isOpened()== False:
+                    if i == 3: #we tryed 4 times
+                        raise VideoStreamProblemVAOCVError('Video Path Is Not Open.' + str(self.videoPath))
+                    else:
+                        time.sleep(1)
+                        continue
+                else:
+                    # print("releasing")
+                    cap.release()
+                    break #link is good
+        except Exception as e:
+            print('Exception while Opening Stream')
+            raise e
         if self.isWebcam:
             #The VideoStream class always gives us the latest frame from the webcam. It uses another thread to read the frames.
             # self.vs = VideoStream(int(self.videoPath)).start()

@@ -62,6 +62,22 @@ class MSOCRServiceVAOCVError(VAOCVError):
         self.error_string = "NO_MSOCR_CONNECTION"
 
 
+class VideoStreamProblemVAOCVError(VAOCVError):
+    """
+    This error is sent when the video stream cannot be opened 
+    """
+    def __init__(self, message="Failed to initialize video stream"):
+        """
+        :param object message: if you would like to add some info it can be passed with this string 
+        as "Unkown Error" by default. Optional.
+        """
+        self.expression = message
+        self.send_socket = True
+        self.send_api = True
+        self.exit_code = 1
+        self.error_string = "NO_INIT_STREAM"
+
+
 class StreamStoppedVAOCVError(VAOCVError):
     def __init__(self, message="Stream stopped"):
         self.expression = message
