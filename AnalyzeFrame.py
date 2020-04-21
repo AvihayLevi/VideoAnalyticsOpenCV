@@ -505,7 +505,7 @@ def generic_errors(output, last_results):
             miss_count += 1
     if miss_count > 0:
         if miss_count >= 0.5*len(output):
-            results_warning = "WARNING"
+            results_warning = True
             if miss_count >= 0.75*len(output):
                 print("Fatal error, almost no data in format")
             else:
@@ -554,7 +554,7 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
     if device_type == "respiration":
         found_mode, found_warning = getVelaModeAndWarning(orig_frame, fixed_corners, computervision_client)
         if found_mode != "volumesimv":
-            mode_warning = "WARNING"
+            mode_warning = True
             # print("UNKNOWN MODE DETECTED!!")
             # TODO: try again and raise exception
         if found_warning != "no warning":

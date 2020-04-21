@@ -221,16 +221,7 @@ class HttpBoundriesVAOCVError(VAOCVError):
         self.send_api = True
         self.exit_code = 9
         self.error_string = "HTTP_BOUNDRIES"
-
-
-class OCRBusyVAOCVError(VAOCVError):
-     def __init__(self, message="ocr is busy"):
-        self.expression = message
-        self.send_socket = True 
-        self.send_api = True
-        self.exit_code = 9
-        self.error_string = "OCR_BUSY"
-    
+ 
     
 class OCRFrameVAOCVError(VAOCVError):
     def __init__(self, message="ocr frame proccessing problem"):
