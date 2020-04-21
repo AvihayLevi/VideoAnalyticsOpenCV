@@ -223,7 +223,7 @@ class HttpResultsWrongCodeVAOCVError(VAOCVError):
         self.expression = message
         self.send_socket = True 
         self.send_api = True
-        self.exit_code = 6
+        self.exit_code = 7
         self.error_string = "HTTP_RESULTS_WRONG_CODE"
 
 
@@ -232,7 +232,7 @@ class HttpCantGetResultsVAOCVError(VAOCVError):
         self.expression = message
         self.send_socket = True 
         self.send_api = True
-        self.exit_code = 7
+        self.exit_code = 6
         self.error_string = "HTTP_CAN_NOT_GET_RESULTS"
 
 
@@ -242,7 +242,7 @@ class HttpResultsAreEmptyOrMissingVAOCVError(VAOCVError):
         self.send_socket = True 
         self.send_api = True
         self.exit_code = 8
-        self.error_string = "REQUIRED_FIELD_EMPTY_OR_MISSING"
+        self.error_string = "MES_FIELDS_EMPTY_OR_MISSING"
 
 class HttpBoundriesVAOCVError(VAOCVError):
     def __init__(self, message="can't get boundires"):
