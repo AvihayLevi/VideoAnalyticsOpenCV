@@ -134,9 +134,35 @@ class CameraCapture(object):
     def __get_boundries(self):
         API_URL = os.getenv("API_URL")
         url = API_URL + "/" + self.monitor_id + "?image=false"
-        response = requests.get(url)
+        response = None
+        for trail in range(4):
+            try:
+                response = requests.get(url)
+                if response.status_code != 200:
+                    raise(Exception("Bad API Status Code: " + str(response.status_code)))
+            except Exception as e:
+                print("Not getting MES Setup results via API.")
+                if trail == 3:
+                    if response is not None:
+                        if response.status_code != 200:
+                            raise HttpResultsWrongCodeVAOCVError("Bad API response trying to Get, status code: " + str(response.status_code)) 
+                    else:
+                        raise HttpCantGetResultsVAOCVError("Can't Get Setup Results via API!: "+ str(e))
+                time.sleep(1)
+                continue
+            break
+
         json_response = response.text
         dict_response = json.loads(json_response)
+        # check API results:
+        important_keys = ['boundries', 'areas', 'type', 'corners'] 
+        try:
+            result = all((k in dict_response.keys()) and (dict_response[k]) for k in important_keys)   
+            if not result:
+                raise HttpResultsAreEmptyOrMissingVAOCVError("One or More of the next Fields are Empty\Missing: 'boundries', 'areas', 'type', 'corners' in API Get Result") 
+        except HttpResultsAreEmptyOrMissingVAOCVError as e:
+            raise e
+        
         boundries_list = dict_response["boundries"]
         
         # TODO: Change back to type:value in production 
