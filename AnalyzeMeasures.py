@@ -365,7 +365,6 @@ def AnalyzeMeasures(frame, computervision_client):
         
     monitor_id = os.getenv("DEVICE_ID")
     json_string = setup_output_former(transformed_coords, areas_dict, b64_encoded_frame, monitor_id, corners)
-    # url = "https://rstreamapptest.azurewebsites.net/rstream/api/med_equipment"
     url = os.getenv("API_URL")
     headers = {'Content-type':'application/json', 'Accept':'application/json'}
     response = None

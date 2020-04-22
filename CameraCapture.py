@@ -90,7 +90,6 @@ class CameraCapture(object):
         if not self.onboardingMode: # live-stream mode, will use known boundries
             self.__get_boundries()
             # connect to server
-            # socketIO = SocketIO('https://rstream-node.azurewebsites.net', 443, BaseNamespace)
             SOCKET_URL = os.getenv("SOCKET_URL")
             try:
                 socketIO = SocketIO(SOCKET_URL, 443, BaseNamespace, False)
