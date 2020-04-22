@@ -277,6 +277,8 @@ def get_digits(img, computervision_client, mode="digits"):
             for line in text_result.lines:
                 # print(line.text, line.bounding_box)
                 if mode == "digits":
+                    line.text = line.text.replace("O", "0")
+                    line.text = line.text.replace("o", "0")
                     s = re.sub('[^0123456789./:]', '', line.text)
                     if s != "":
                         if s[0] == ".":
@@ -404,7 +406,7 @@ def getVelaModeAndWarning(img, marker_corners, computervision_client):
 def fix_readings(readings_dic):
     for name, read in readings_dic.items(): 
         read, rlen = str(read), len(read) 
-        if name == 'IBP':
+        if name == 'IBP' or name == 'NIBP':
             if rlen >= 6: # XXX/XXX or XXX/XX
                 if read[3] in [7,1] : # mistake: 120780 -> 120/80, 1407110 -> 140/110 
                     readings_dic[name] = read[:2] + '/' + read[4:]
@@ -413,7 +415,7 @@ def fix_readings(readings_dic):
                     readings_dic[name] = read[:1] + '/' + read[3:]
         elif name == 'HR': 
             continue 
-        elif name == 'temp': 
+        elif name == 'Temp': 
             if rlen >= 3:
                 if read[2] not in [',','.']: # XXX 
                     readings_dic[name] = read[:2] + '.' + read[2:] # mistake: 307 -> 30.7
@@ -506,12 +508,13 @@ def generic_errors(output, last_results):
     if miss_count > 0:
         if miss_count >= 0.5*len(output):
             results_warning = True
-            if miss_count >= 0.75*len(output):
-                print("Fatal error, almost no data in format")
-            else:
-                print("Error, most data not in format","red")
+            # if miss_count >= 0.75*len(output):
+            #     print("Fatal error, almost no data in format")
+            # else:
+            #     print("Error, most data not in format","red")
         else:
-            print("Mild error, some missing fields","yellow")
+            pass
+            # print("Mild error, some missing fields","yellow")
     missing_dict = {}
     amount_of_results = len(last_results)
     for res in last_results:
@@ -584,6 +587,7 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
                 raise Exception("UNRECOGNIZED MODEL")
         except Exception as e:
             print(e)
+            raise e
             continue
         for item in results:
             readings[i] = item[0]
@@ -591,11 +595,11 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
             i = i + 1
     
     output = create_bounded_output(readings, boundings, transform_boundries(boundries), 3)
+    print("OCR output (before changes): \n", output)
     # IMPORTANT: when needed - comment-out next line and change get_boundries accordingly
     # Fix Readings based on known measures format:
-    # output = fix_readings(output)
+    output = fix_readings(output)
     
-    """
     k_frames_to_save = 5
     if len(old_results_list) < k_frames_to_save:
         old_results_list.append(output) #build "window" of 5 frames
@@ -606,7 +610,7 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
         fixed_result = fix_output(output, old_results_list, k_frames_to_save-1) 
         old_results_list.append(output) #add our current result
         output = fixed_result
-    """
+    
     results_warning = None
     results_warning = generic_errors(output, old_results_list)
     # print("Results Warning: ", results_warning)
