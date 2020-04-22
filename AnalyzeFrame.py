@@ -334,6 +334,30 @@ def get_ala_digits(img):
     # print(filtered_results)
     return(filtered_results)
 
+def get_intel_digits(img):
+    # tmp_frame = cv2.imdecode(np.frombuffer(img, np.uint8), -1)
+    # cv2.imshow("image", tmp_frame)
+    # cv2.waitKey(0)
+    enc_img = base64.b64encode(img)
+    data = {"image": str(enc_img, 'utf-8')}
+    res = requests.post("http://127.0.0.1:8088/run_ocr", json=data)
+    res_str = json.loads(res.text)
+    results_dicts = [{"text": x["text"], "coords": [x["coords"]["left"], x["coords"]["top"], x["coords"]["right"], x["coords"]["top"], x["coords"]["right"], x["coords"]["bottom"], x["coords"]["left"], x["coords"]["bottom"]]} for x in res_str]
+    # print(results_dicts)
+    filtered_results = []
+    for item in results_dicts:
+        s = re.sub('[^0123456789./:]', '', item['text'])
+        if s != "":
+            if s[0] == ".":
+                s = s[1:]
+            s = s.rstrip(".")
+            filtered_results.append((s, item['coords']))
+        else:
+            continue
+    # print("--------------------")
+    # print(filtered_results)
+    return(filtered_results)
+
 
 def boundries_to_areas(boundries, hight, width):
     areas = {}
@@ -581,8 +605,10 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
         try:
             if CV_MODEL == "MSOCR":
                 results = get_digits(cv2.imencode(".jpg", area[0])[1], computervision_client, "digits")
-            # elif CV_MODEL == "ALA":
-                # results = get_ala_digits(cv2.imencode(".jpg", area[0])[1])
+            elif CV_MODEL == "ALA":
+                results = get_ala_digits(cv2.imencode(".jpg", area[0])[1])
+            elif CV_MODEL == "INTEL":
+                results = get_intel_digits(cv2.imencode(".jpg", area[0])[1])
             else:
                 raise Exception("UNRECOGNIZED MODEL")
         except Exception as e:
