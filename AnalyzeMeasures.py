@@ -120,11 +120,24 @@ def sliding_up_window(image, step_size, window_size):
 
 def find_best_windows(computervision_client, warped_frame, mode, num_of_windows = 2): #windos in format [y_down, y_up, x_left, x_right]
     #simple mode, fixed size
+    device_type = os.getenv("DEVICE_TYPE")
+    print("device type: ", device_type)
     if mode == 'simple': #we know the windows size
-        bottom_window = [0.6, 1, 0, 1]
-        left_window = [0, 1, 0, 0.35]
-        right_window= [0, 1, 0.65, 1]
-        return [bottom_window, right_window, left_window]
+        if device_type == "respiration":
+            bottom_window = [0.6, 1, 0, 1]
+            left_window = [0, 1, 0, 0.35]
+            return [bottom_window, left_window]
+        elif device_type == "monitor":
+            bottom_window = [0.6, 1, 0, 1]
+            right_window = [0, 1, 0.65, 1]
+            return [bottom_window, right_window]
+        else:
+            print("UNKNOWN DEVICE TYPE!")
+            raise Exception("UNKNOWN DEVICE TYPE!")
+        # bottom_window = [0.6, 1, 0, 1]
+        # left_window = [0, 1, 0, 0.35]
+        # right_window = [0, 1, 0.65, 1]
+        # return [bottom_window, right_window, left_window]
     
     # Pre Process:
     gray = cv2.cvtColor(warped_frame, cv2.COLOR_BGR2GRAY)
@@ -320,18 +333,11 @@ def is_same_bounding(boundings_1, boundings_2): #bounding in form of (top_left_c
 def AnalyzeMeasures(frame, computervision_client):
     frame = cv2.imdecode(np.frombuffer(frame, np.uint8), -1)
     # cv2.imwrite("image.jpg", frame)
-    """
-    # areas_dict = {'side': [0, 1, 0.7, 0.9], 'bottom': [0.6, 0.9, 0.3, 0.7]}
-    areas_dict = {'low': [0.6, 0.85, 0, 0.5], 'side': [0.1, 0.9, 0.6, 0.9]}
-    areas = create_areas(areas_dict, frame)
-    """
-    # print(type(frame))
-
-    " TODO: detect markers here: "
+    
     corners = detect_markers(frame)
     print(corners)
     if len(corners) != 4:
-        # TODO: throw exception if 4 corners wern't found for a long time
+        # TODO: throw exception if 4 corners wern't found for a long time - for now, there's a one minuet timer at the back-end
         print(len(corners))
         print("NOT DETECTED 4 CORNERS!")
         time.sleep(2)
