@@ -608,13 +608,13 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
             elif CV_MODEL == "ALA":
                 results = get_ala_digits(cv2.imencode(".jpg", area[0])[1])
             elif CV_MODEL == "INTEL":
+                # TODO: align functionality with get_digits:
                 results = get_intel_digits(cv2.imencode(".jpg", area[0])[1])
             else:
                 raise Exception("UNRECOGNIZED MODEL")
         except Exception as e:
-            print(e)
+            print("Exception in get_digits: \n", e)
             raise e
-            continue
         for item in results:
             readings[i] = item[0]
             boundings[i] = transform_coords(item[1], area)
