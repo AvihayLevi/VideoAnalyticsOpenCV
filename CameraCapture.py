@@ -110,16 +110,21 @@ class CameraCapture(object):
         self.modelId = modelId
 
         if self.verbose:
+            print("Container vesrion: --> v0.9")
             print("Initialising the camera capture with the following parameters: ")
-            print("   - Video path: " + self.videoPath)
-            print("   - Image processing endpoint: " + self.imageProcessingEndpoint)
-            print("   - Image processing params: " + json.dumps(self.imageProcessingParams))
-            print("   - Show video: " + str(self.showVideo))
-            print("   - Loop video: " + str(self.loopVideo))
-            print("   - Convert to gray: " + str(self.convertToGray))
-            print("   - Resize width: " + str(self.resizeWidth))
-            print("   - Resize height: " + str(self.resizeHeight))
-            print("   - Annotate: " + str(self.annotate))
+            print("   - Video path: " + str(self.videoPath))
+            print("   - OnBoarding mode: " + str(self.onboardingMode))
+            print("   - Device ID: " + str(self.monitor_id))
+            print("   - Device type: " + str(self.device_type))
+            print("   - Computer vision model: " + str(os.getenv('CV_MODEL', "")))
+            # print("   - Image processing endpoint: " + self.imageProcessingEndpoint)
+            # print("   - Image processing params: " + json.dumps(self.imageProcessingParams))
+            # print("   - Show video: " + str(self.showVideo))
+            # print("   - Loop video: " + str(self.loopVideo))
+            # print("   - Convert to gray: " + str(self.convertToGray))
+            # print("   - Resize width: " + str(self.resizeWidth))
+            # print("   - Resize height: " + str(self.resizeHeight))
+            # print("   - Annotate: " + str(self.annotate))
             print()
         
         self.displayFrame = None

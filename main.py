@@ -126,7 +126,6 @@ if __name__ == '__main__':
     
     try:
         VIDEO_PATH = os.environ['VIDEO_PATH']
-        print("Vid Path", VIDEO_PATH)
         ONBOARDING_MODE = __convertStringToBool(os.getenv('ONBOARDING_MODE', 'True'))
         IMAGE_PROCESSING_ENDPOINT = os.getenv('IMAGE_PROCESSING_ENDPOINT', "bla")
         IMAGE_PROCESSING_PARAMS = os.getenv('IMAGE_PROCESSING_PARAMS', "")

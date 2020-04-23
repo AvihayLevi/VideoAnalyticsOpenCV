@@ -4,10 +4,10 @@ import time
 
 class SocketNamespace(BaseNamespace):
     def on_connect(self):
-        print('[Connected]')
+        print('[Socket Connected]')
    
     def on_disconnect(self):
-        print('[Disconnected]')
+        print('[Socket Disconnected]')
    
     def on_event(self, event, *args):
         pass
