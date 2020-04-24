@@ -429,7 +429,9 @@ def getVelaModeAndWarning(img, marker_corners, computervision_client):
 
 def fix_readings(readings_dic):
     for name, read in readings_dic.items(): 
-        read, rlen = str(read), len(read) 
+        read, rlen = str(read), len(read)
+        if read == "N/A":
+            continue
         if name == 'IBP' or name == 'NIBP':
             if rlen >= 6: # XXX/XXX or XXX/XX
                 if read[3] in [7,1] : # mistake: 120780 -> 120/80, 1407110 -> 140/110 
