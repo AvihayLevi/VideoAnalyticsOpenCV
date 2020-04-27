@@ -434,13 +434,31 @@ def fix_readings(readings_dic):
             continue
         if name == 'IBP' or name == 'NIBP':
             if rlen >= 6: # XXX/XXX or XXX/XX
-                if read[3] in [7,1] : # mistake: 120780 -> 120/80, 1407110 -> 140/110 
-                    readings_dic[name] = read[:2] + '/' + read[4:]
+                if read[3] in ["7", "1", "4"] : # mistake: 120780 -> 120/80, 1407110 -> 140/110 
+                    readings_dic[name] = read[:3] + '/' + read[4:]
             elif rlen == 5: # XX/XX
-                if read[2] in [7,1] : # mistake: 90760 -> 90/60 
-                    readings_dic[name] = read[:1] + '/' + read[3:]
+                if read[2] in ["7", "1", "4"] : # mistake: 90760 -> 90/60 
+                    readings_dic[name] = read[:2] + '/' + read[3:]
+            else:
+                readings_dic[name] = "N/A"
         elif name == 'HR': 
-            continue 
+            continue
+        elif name == 'etCO2':
+            if rlen > 2:
+                if read.endswith("100"):
+                    readings_dic[name] = "100"
+                else:
+                    readings_dic[name] = read[rlen-2] + read[rlen-1]
+        elif name == 'SpO2':
+            if int(read) > 100: # TODO: left to decide whether to check situations with singal-digit sat level
+                if rlen == 3:
+                    readings_dic[name] = read[1] + read[2]
+                elif read[rlen-1] == "0" and read[rlen-2] == "0":
+                    readings_dic[name] = "100"
+                else:
+                    readings_dic[name] = read[rlen-2] + read[rlen-1]
+            elif rlen < 2:
+                readings_dic[name] = "N/A"
         elif name == 'Temp': 
             if rlen >= 3:
                 if read[2] not in [',','.']: # XXX 
@@ -621,7 +639,7 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
             readings[i] = item[0]
             boundings[i] = transform_coords(item[1], area)
             i = i + 1
-    
+    print("Raw readings: \n", readings)
     output = create_bounded_output(readings, boundings, transform_boundries(boundries), 3)
     print("OCR output (before changes): \n", output)
     # IMPORTANT: when needed - comment-out next line and change get_boundries accordingly
