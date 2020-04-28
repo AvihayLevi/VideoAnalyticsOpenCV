@@ -443,6 +443,9 @@ def fix_readings(readings_dic):
                 readings_dic[name] = "N/A"
         elif name == 'HR': 
             continue
+        elif name == "RR":
+            if rlen > 2:
+                readings_dic[name] = read[rlen-2] + read[rlen-1]
         elif name == 'etCO2':
             if rlen > 2:
                 if read.endswith("100"):
@@ -639,7 +642,7 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
             readings[i] = item[0]
             boundings[i] = transform_coords(item[1], area)
             i = i + 1
-    print("Raw readings: \n", readings)
+    print("Raw readings: \n", readings, "\n Boundings: \n", boundings)
     output = create_bounded_output(readings, boundings, transform_boundries(boundries), 3)
     print("OCR output (before changes): \n", output)
     # IMPORTANT: when needed - comment-out next line and change get_boundries accordingly
