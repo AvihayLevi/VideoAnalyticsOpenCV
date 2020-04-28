@@ -110,7 +110,7 @@ class CameraCapture(object):
         self.modelId = modelId
 
         if self.verbose:
-            print("Container vesrion: --> v1.0")
+            print("Container vesrion: --> v1.1")
             print("Initialising the camera capture with the following parameters: ")
             print("   - Video path: " + str(self.videoPath))
             print("   - OnBoarding mode: " + str(self.onboardingMode))
