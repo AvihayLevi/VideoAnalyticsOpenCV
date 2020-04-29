@@ -334,7 +334,7 @@ def get_ala_digits(img):
     # print(filtered_results)
     return(filtered_results)
 
-def get_intel_digits(img):
+def get_intel_digits(img, mode):
     # tmp_frame = cv2.imdecode(np.frombuffer(img, np.uint8), -1)
     # cv2.imshow("image", tmp_frame)
     # cv2.waitKey(0)
@@ -346,14 +346,21 @@ def get_intel_digits(img):
     # print(results_dicts)
     filtered_results = []
     for item in results_dicts:
-        s = re.sub('[^0123456789./:]', '', item['text'])
-        if s != "":
-            if s[0] == ".":
-                s = s[1:]
-            s = s.rstrip(".")
-            filtered_results.append((s, item['coords']))
-        else:
-            continue
+        if mode == "digits":
+            s = re.sub('[^0123456789./:]', '', item['text'])
+            if s != "":
+                if s[0] == ".":
+                    s = s[1:]
+                s = s.rstrip(".")
+                filtered_results.append((s, item['coords']))
+            else:
+                continue
+        elif mode == "text":
+            s = item['text']
+            if s != "":
+                filtered_results.append((s, item['coords']))
+            else:
+                continue
     # print("--------------------")
     # print(filtered_results)
     return(filtered_results)
@@ -387,8 +394,12 @@ def getVelaModeAndWarning(img, marker_corners, computervision_client):
     readings = {}
     boundings = {}
     i = 0
+    CV_MODEL = os.getenv("CV_MODEL")
     for area in areas:
-        results = get_digits(cv2.imencode(".jpg", area[0])[1], computervision_client, "modes")
+        if CV_MODEL == "MSOCR":
+            results = get_digits(cv2.imencode(".jpg", area[0])[1], computervision_client, "modes")
+        elif CV_MODEL == "INTEL":
+            results = get_intel_digits(cv2.imencode(".jpg", area[0])[1],"text")
         # results = get_ala_digits(cv2.imencode(".jpg", area[0])[1])
         for item in results:
             readings[i] = item[0]
@@ -632,7 +643,7 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
                 results = get_ala_digits(cv2.imencode(".jpg", area[0])[1])
             elif CV_MODEL == "INTEL":
                 # TODO: align functionality with get_digits:
-                results = get_intel_digits(cv2.imencode(".jpg", area[0])[1])
+                results = get_intel_digits(cv2.imencode(".jpg", area[0])[1], "digits")
             else:
                 raise Exception("UNRECOGNIZED MODEL")
         except Exception as e:
