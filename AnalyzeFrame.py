@@ -443,19 +443,33 @@ def getVelaModeAndWarning(img, marker_corners, computervision_client):
 
 
 def fix_readings(readings_dic):
+    CV_MODEL = os.getenv("CV_MODEL")
     for name, read in readings_dic.items(): 
         read, rlen = str(read), len(read)
         if read == "N/A":
             continue
         if name == 'IBP' or name == 'NIBP':
-            if rlen >= 6: # XXX/XXX or XXX/XX
-                if read[3] in ["7", "1", "4"] : # mistake: 120780 -> 120/80, 1407110 -> 140/110 
-                    readings_dic[name] = read[:3] + '/' + read[4:]
-            elif rlen == 5: # XX/XX
-                if read[2] in ["7", "1", "4"] : # mistake: 90760 -> 90/60 
-                    readings_dic[name] = read[:2] + '/' + read[3:]
-            else:
-                readings_dic[name] = "N/A"
+            if CV_MODEL == "MSOCR":
+                if rlen >= 6: # XXX/XXX or XXX/XX
+                    if read[3] in ["7", "1", "4"] : # mistake: 120780 -> 120/80, 1407110 -> 140/110 
+                        readings_dic[name] = read[:3] + '/' + read[4:]
+                elif rlen == 5: # XX/XX
+                    if read[2] in ["7", "1", "4"] : # mistake: 90760 -> 90/60 
+                        readings_dic[name] = read[:2] + '/' + read[3:]
+                else:
+                    readings_dic[name] = "N/A"
+            elif CV_MODEL == "INTEL":
+                if rlen == 4: # XXXX
+                    readings_dic[name] = read[:2] + '/' + read[2:]
+                elif rlen == 5: # XX/XX or XXXXX
+                    if 100 <= int(read[:3]) <300: # XXXXX
+                        readings_dic[name] = read[:3] + '/' + read[3:]
+                    else: # XX/XX : 90760 -> 90/60 
+                        readings_dic[name] = read[:2] + '/' + read[3:]
+                elif rlen >= 6: # XXX/XXX or XXX/XX --- TODO: !!in case "/" is missing - can't tell between xxx/xx and xxxxxx!!
+                    if read[3] in ["7", "1", "4"] : # mistake: 120780 -> 120/80, 1407110 -> 140/110 
+                        readings_dic[name] = read[:3] + '/' + read[4:]
+
         elif name == 'HR': 
             continue
         elif name == "RR":
