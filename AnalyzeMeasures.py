@@ -118,7 +118,7 @@ def sliding_up_window(image, step_size, window_size):
         continue
 
 
-def find_best_windows(computervision_client, warped_frame, mode, num_of_windows = 2): #windos in format [y_down, y_up, x_left, x_right]
+def find_best_windows(computervision_client, warped_frame, mode="simple", num_of_windows = 2): #windos in format [y_down, y_up, x_left, x_right]
     #simple mode, fixed size
     device_type = os.getenv("DEVICE_TYPE")
     print("device type: ", device_type)
@@ -139,6 +139,7 @@ def find_best_windows(computervision_client, warped_frame, mode, num_of_windows 
         # right_window = [0, 1, 0.65, 1]
         # return [bottom_window, right_window, left_window]
     
+    """ !!! IF YOU WISH TO CONTINUE - NEED TO DEAL WITH INTEGRATING INTEL OCR TO get_digits_FBW !!! """
     # Pre Process:
     gray = cv2.cvtColor(warped_frame, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -322,6 +323,43 @@ def get_digits(img, computervision_client):
     return(results)
 
 
+def get_intel_digits(img, mode):
+    # tmp_frame = cv2.imdecode(np.frombuffer(img, np.uint8), -1)
+    # cv2.imshow("image", tmp_frame)
+    # cv2.waitKey(0)
+    enc_img = base64.b64encode(img)
+    data = {"image": str(enc_img, 'utf-8')}
+    INTEL_OCR_ENDPOINT = os.getenv("INTEL_OCR_ENDPOINT")
+    # res = requests.post("http://127.0.0.1:8088/run_ocr", json=data)
+    res = requests.post(INTEL_OCR_ENDPOINT, json=data)
+    res_str = json.loads(res.text)
+    results_dicts = [{"text": x["text"], "coords": [x["coords"]["left"], x["coords"]["top"], x["coords"]["right"], x["coords"]["top"], x["coords"]["right"], x["coords"]["bottom"], x["coords"]["left"], x["coords"]["bottom"]]} for x in res_str]
+    # print(results_dicts)
+    filtered_results = []
+    for item in results_dicts:
+        if mode == "digits":
+            s = re.sub('[^0123456789./:]', '', item['text'])
+            if s != "":
+                if s[0] == ".":
+                    s = s[1:]
+                s = s.rstrip(".")
+                # filtered_results.append((s, item['coords']))
+                top_left_coords = (int(item["coords"][0]), int(item["coords"][1]))
+                bottom_right_coords = (int(item["coords"][4]), int(item["coords"][5]))
+                filtered_results.append((top_left_coords, bottom_right_coords))
+            else:
+                continue
+        elif mode == "text":
+            s = item['text']
+            if s != "":
+                filtered_results.append((s, item['coords']))
+            else:
+                continue
+    # print("--------------------")
+    # print(filtered_results)
+    return(filtered_results)
+
+
 def is_same_bounding(boundings_1, boundings_2): #bounding in form of (top_left_coords, bottom_right_coords)
     output = abs(boundings_1[0][0] - boundings_2[0][0]) < 17
     output = output and abs(boundings_1[0][1] - boundings_2[0][1]) < 17
@@ -351,8 +389,18 @@ def AnalyzeMeasures(frame, computervision_client):
     # our output
     transformed_coords = {}
     i = 0
+    CV_MODEL = os.getenv("CV_MODEL")
     for area in areas:
-        result = get_digits(area[0], computervision_client)
+        try:
+            if CV_MODEL == "MSOCR":
+                result = get_digits(area[0], computervision_client)
+            elif CV_MODEL == "INTEL":
+                result = get_intel_digits(cv2.imencode(".jpg", area[0])[1], "digits")
+            else:
+                raise Exception("UNRECOGNIZED MODEL")
+        except Exception as e:
+            print("Exception in get_digits: \n", e)
+            raise e
         print(result)
         for item in result:
             transformed_boundries = transform_coords(item, area)
