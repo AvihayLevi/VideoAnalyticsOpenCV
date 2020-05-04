@@ -340,7 +340,9 @@ def get_intel_digits(img, mode):
     # cv2.waitKey(0)
     enc_img = base64.b64encode(img)
     data = {"image": str(enc_img, 'utf-8')}
-    res = requests.post("http://127.0.0.1:8088/run_ocr", json=data)
+    INTEL_OCR_ENDPOINT = os.getenv("INTEL_OCR_ENDPOINT")
+    # res = requests.post("http://127.0.0.1:8088/run_ocr", json=data)
+    res = requests.post(INTEL_OCR_ENDPOINT, json=data)
     res_str = json.loads(res.text)
     results_dicts = [{"text": x["text"], "coords": [x["coords"]["left"], x["coords"]["top"], x["coords"]["right"], x["coords"]["top"], x["coords"]["right"], x["coords"]["bottom"], x["coords"]["left"], x["coords"]["bottom"]]} for x in res_str]
     # print(results_dicts)
@@ -410,6 +412,8 @@ def getVelaModeAndWarning(img, marker_corners, computervision_client):
 
     # check mode:
     known_modes = ["volumesimv","prvca/c"]
+    if CV_MODEL == "INTEL":
+        known_modes = ["volumesimv","prvca1c"]
     min_mode_distance = 99
     found_mode = "UNKNOWN MODE"
     for item in strings_found:
@@ -653,7 +657,8 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
             readings[i] = item[0]
             boundings[i] = transform_coords(item[1], area)
             i = i + 1
-    print("Raw readings: \n", readings, "\n Boundings: \n", boundings)
+    # print("Raw readings: \n", readings, "\n Boundings: \n", boundings)
+    print("Raw readings: \n", readings)
     output = create_bounded_output(readings, boundings, transform_boundries(boundries), 3)
     print("OCR output (before changes): \n", output)
     # IMPORTANT: when needed - comment-out next line and change get_boundries accordingly

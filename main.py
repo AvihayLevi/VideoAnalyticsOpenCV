@@ -117,6 +117,9 @@ if __name__ == '__main__':
             print("Missing Enviroment Variable in [API_URL, SOCKET_URL, CV_MODEL, FRAME_DELAY, VIDEO_PATH, ONBOARDING_MODE, COMPUTER_VISION_SUBSCRIPTION_KEY, COMPUTER_VISION_ENDPOINT, DEVICE_ID, GILAYON_NUM]: \n", \
                  [API_URL, SOCKET_URL, CV_MODEL, FRAME_DELAY, VIDEO_PATH, ONBOARDING_MODE, "SECRET-Not-Printing", COMPUTER_VISION_ENDPOINT, DEVICE_ID, GILAYON_NUM])
             raise EnvVarsVAOCVError("Not all Enviroment Variables passed succesfuly")
+        INTEL_OCR_ENDPOINT = os.getenv('INTEL_OCR_ENDPOINT', "")
+        if INTEL_OCR_ENDPOINT == "":
+            raise EnvVarsVAOCVError("Missing Intel OCR endpoint")
     except EnvVarsVAOCVError as e:
         print(e)
         sys.exit(1)
