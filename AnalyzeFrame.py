@@ -135,6 +135,30 @@ def create_areas(area_dict, img):
         areas.append(new_area)
     return areas
 
+def create_areas_black(area_dict, img): #blocks irelevant area and return the original image with blocked part
+    s = img.shape
+    height, width = s[0], s[1]
+    areas = []
+    max_x_val = 0
+    for key, value in area_dict.items():
+        hmin, hmax, wmin, wmax = value
+        if hmin == 0 and hmax == 1: #vertical window
+            if wmin == 0:
+                black_window_x_left =  math.ceil(wmax * width) 
+                black_window_x_right = 1
+            else:
+                black_window_x_left = 0
+                black_window_x_right = math.ceil(wmin * width)
+        else: #horizontal window
+            black_window_y_up = 0
+            black_window_y_down = math.ceil(hmin * height)
+
+    original_picture_with_black_irelevant_window = cv2.rectangle(img, (black_window_x_left, black_window_y_up), (black_window_x_right, black_window_y_down), (0, 255, 0), -1) #block irelevant area
+    single_area = [original_picture_with_black_irelevant_window, 0, 0]
+    areas.append(single_area)
+    return areas
+
+
 def transform_coords(coords, area):
     fixed_coords = []
     for j in range(8):
@@ -645,8 +669,15 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
     # frame = ImagePreprocess.filter2d(frame)
     
     areas_dict = areas_of_interes
-    # areas_dict = boundries_to_areas(boundries, frame.shape[0], frame.shape[1])
-    areas = create_areas(areas_dict, frame)
+    combine_areas_to_frame = True
+    if os.environ['CV_MODEL'] == 'INTEL' and combine_areas_to_frame:
+        try:
+            areas = create_areas_black(areas_dict, frame)
+        except Exception as e:
+            print('Error in black area:\n', e)
+            raise e
+    else:
+        areas = create_areas(areas_dict, frame)
     
     # our output
     readings = {}
