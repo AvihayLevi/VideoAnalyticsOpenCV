@@ -403,7 +403,17 @@ def boundries_to_areas(boundries, hight, width):
     return areas
 
 
-def getVelaModeAndWarning(img, marker_corners, computervision_client):  
+def getVelaModeAndWarning(img, marker_corners, computervision_client):
+    """[summary]
+
+    Arguments:
+        img {[type]} -- [description]
+        marker_corners {[type]} -- [description]
+        computervision_client {[type]} -- [description]
+
+    Returns:
+        [type] -- [description]
+    """
     s = img.shape
     height, width = s[0], s[1]
     two_top_markers = sorted(marker_corners, key=lambda tup: tup[1])[:2] # get 2 top markers

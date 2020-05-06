@@ -253,7 +253,14 @@ class CameraCapture(object):
 
     
     def __sendFrameForProcessing(self, frame):
-        # TODO: try-except-throw - by what Lior wants for the wrapper
+        """ processing function - sending the current frame for processing, depending on the system mode
+
+        Arguments:
+            frame {cv2 image} -- current frame
+
+        Returns:
+            [Bool] -- True - Analyze function ends succesfuly (OBM - reading 4 corners, Live strem - returns) ; False - otherwise
+        """
         if self.onboardingMode:
             corners_flag = AnalyzeMeasures.AnalyzeMeasures(frame, self.computervision_client)
             # reutrn True if 4 corners detected, else - False:
@@ -270,6 +277,8 @@ class CameraCapture(object):
 
     
     def __enter__(self):
+        # Testing whether the video path is valid and running: trying to create a VideoCapture object and check if its open.
+        # In case of a problem - raises an exception
         try:
             for i in range(4):
                 cap = cv2.VideoCapture(self.videoPath)
@@ -307,6 +316,7 @@ class CameraCapture(object):
     def start(self):
         frameCounter = 0
         perfForOneFrameInMs = None
+        # main loop:
         while True:
             if self.showVideo or self.verbose:
                 startOverall = time.time()
@@ -314,6 +324,7 @@ class CameraCapture(object):
                 startCapture = time.time()
 
             frameCounter +=1
+            # Read frame: if webcam - latest, else - next one
             if self.isWebcam:
                 try:
                     if self.vs.stopped:
@@ -341,7 +352,7 @@ class CameraCapture(object):
                 print("Time to capture (+ straighten up) a frame: " + self.__displayTimeDifferenceInMs(time.time(), startCapture))
                 startPreProcessing = time.time()
             
-            #Loop video
+            #Loop video - not relevant right now
             if not self.isWebcam:             
                 if frameCounter == self.capture.get(cv2.CAP_PROP_FRAME_COUNT):
                     if self.loopVideo: 
@@ -350,7 +361,7 @@ class CameraCapture(object):
                     else:
                         break
 
-            #Pre-process locally
+            #Pre-process locally - not relevant right now
             if self.nbOfPreprocessingSteps == 1 and self.convertToGray:
                 preprocessedFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             
@@ -365,10 +376,10 @@ class CameraCapture(object):
                 print("Time to pre-process a frame: " + self.__displayTimeDifferenceInMs(time.time(), startPreProcessing))
                 startEncodingForProcessing = time.time()
 
-            #Process externally
+            #Process externally - where the magic happens
             if self.imageProcessingEndpoint != "":
 
-                #Encode frame - not in use for now
+                #Encode frame - not relevant right now
                 if self.nbOfPreprocessingSteps == 0:
                     encodedFrame = cv2.imencode(".jpg", frame)[1].tostring()
                 else:
@@ -378,12 +389,13 @@ class CameraCapture(object):
                     print("Time to encode a frame for processing: " + self.__displayTimeDifferenceInMs(time.time(), startEncodingForProcessing))
                     startProcessingExternally = time.time()
 
-                #Send for processing
+                # Send for processing - where the magic happens
                 if self.onboardingMode:
                     print('Onboarding mode, will stop stream after 1 frame')
                     try:
                         response = self.__sendFrameForProcessing(encodedFrame)
                     except Exception as e:
+                        # shutting down stream from other thread:
                         self.vs.stopped = True
                         time.sleep(2)
                         self.vs.stream.release()
@@ -408,7 +420,7 @@ class CameraCapture(object):
                     print("Time to process frame externally: " + self.__displayTimeDifferenceInMs(time.time(), startProcessingExternally))
                     startSendingToEdgeHub = time.time()
 
-            #Display frames
+            # Display frames - not relevant for now. uses ImageServer module to open port with the video stream (+annotations if passed)
             if self.showVideo:
                 try:
                     if self.nbOfPreprocessingSteps == 0:
