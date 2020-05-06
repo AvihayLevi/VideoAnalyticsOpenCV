@@ -3,20 +3,31 @@
 
 ## Note: This is a work in progress!
 
+## Getting Started
 
-1. clone the .DockerFile to secret.Dockerfile
+### Prerequisites
+This was build on linux using Python 3.5.6, but any python > 3.5.6 will do.
 
-2. provision form recognizer service on Azure
+See requirements.txt for libraries dependencies.
 
-3. configure your secret keys in secret.Dockerfile
+### CV Models Endpoints
+We use both Azure's Computer Vision Cognitive Service "Read" API, and other open-source model on container.
 
-4. build your docker image
+## Deployment
+
+0. Install needed resources
+
+1. Clone the repo
+
+2. Configure needed enviroment variables (see main.py) in launch.json-type file for development or pass to k8s pod via yaml file for deployment
+
+3. build your docker image 
 
 ```
-docker build --rm -f "secret.Dockerfile" -t video-analytics-opencv:latest "."
+docker build --rm -f ".Dockerfile" -t videoanalyticsopencv:vx.x .
 ```
 
-5. run your docker image
+4. run your docker image
 ```
-docker run --rm -it  video-analytics-opencv:latest
+docker run --rm -it  videoanalyticsopencv:vx.x
 ```
