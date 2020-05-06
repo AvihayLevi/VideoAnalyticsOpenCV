@@ -21,13 +21,13 @@ We use both Azure's Computer Vision Cognitive Service "Read" API, and other open
 
 2. Configure needed enviroment variables (see main.py) in launch.json-type file for development or pass to k8s pod via yaml file for deployment
 
-3. build your docker image 
+3. Build your docker image 
 
 ```
 docker build --rm -f ".Dockerfile" -t videoanalyticsopencv:vx.x .
 ```
 
-4. run your docker image
+4. Run your docker image
 ```
 docker run --rm -it  videoanalyticsopencv:vx.x
 ```

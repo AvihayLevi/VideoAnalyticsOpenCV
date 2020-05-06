@@ -118,6 +118,7 @@ if __name__ == '__main__':
                  [API_URL, SOCKET_URL, CV_MODEL, FRAME_DELAY, VIDEO_PATH, ONBOARDING_MODE, "SECRET-Not-Printing", COMPUTER_VISION_ENDPOINT, DEVICE_ID, GILAYON_NUM])
             raise EnvVarsVAOCVError("Not all Enviroment Variables passed succesfuly")
         INTEL_OCR_ENDPOINT = os.getenv('INTEL_OCR_ENDPOINT', "")
+        # TODO: take care of it only if needed - if we need to take ony one endpoint (MS\INTEL) - check only if one of them exists
         if INTEL_OCR_ENDPOINT == "":
             raise EnvVarsVAOCVError("Missing Intel OCR endpoint")
     except EnvVarsVAOCVError as e:
@@ -128,6 +129,7 @@ if __name__ == '__main__':
         sys.exit(1)
     
     try:
+        # TODO: most of theser arguments arn't in use. need to clean it or use it
         VIDEO_PATH = os.environ['VIDEO_PATH']
         ONBOARDING_MODE = __convertStringToBool(os.getenv('ONBOARDING_MODE', 'True'))
         IMAGE_PROCESSING_ENDPOINT = os.getenv('IMAGE_PROCESSING_ENDPOINT', "bla")
@@ -146,5 +148,6 @@ if __name__ == '__main__':
         print(error)
         sys.exit(1)
 
+    # TODO: for better SE: pass some env vars as arguments instead of using them throughout the code
     main(VIDEO_PATH, ONBOARDING_MODE, IMAGE_PROCESSING_ENDPOINT, IMAGE_PROCESSING_PARAMS, SHOW_VIDEO,
          VERBOSE, LOOP_VIDEO, CONVERT_TO_GRAY, RESIZE_WIDTH, RESIZE_HEIGHT, ANNOTATE, COGNITIVE_SERVICE_KEY, MODEL_ID, MAX_EXCEPTIONS)

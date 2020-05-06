@@ -60,6 +60,8 @@ class CameraCapture(object):
         self.onboardingMode = onboardingMode
         # Avihay's bug fix:
         # TODO: add argument to choose which kind of processing - file or stream
+        # Explanation: in the original demo, only a number was passed as path, because in RasPi webcam it is the case.
+        # the different is when it's a webcam (True) - we take the latest frame at each point. In case it's a video (False) - we run on ALL frames
         if not self.__IsInt(videoPath):
             # case of a stream
             self.isWebcam = True
@@ -138,6 +140,17 @@ class CameraCapture(object):
         self.computervision_client = ComputerVisionClient(COMPUTER_VISION_ENDPOINT, CognitiveServicesCredentials(COMPUTER_VISION_SUBSCRIPTION_KEY))
 
     def __get_boundries(self):
+        """
+        Gets device data from DB using API get request. Runs only on LIVE-STREAM mode
+        Gets boundries, areas and corners (after MES Setup stage) and the device type (monitor\respirator)
+        Updates class and enviroment variables with the relevant data.
+
+        Raises:
+            HttpResultsWrongCodeVAOCVError: Gets status code != 200
+            HttpCantGetResultsVAOCVError: Can't preform get function
+            HttpResultsAreEmptyOrMissingVAOCVError: At leaste one of the fields is missing
+            e: [description]
+        """
         API_URL = os.getenv("API_URL")
         url = API_URL + "/" + self.monitor_id + "?image=false"
         response = None
@@ -184,6 +197,16 @@ class CameraCapture(object):
 
 
     def __get_device_type_for_onboarding(self):
+        """
+        Gets device type from DB using API get request. Runs only on ON-BOARDING mode
+        Updates enviroment variable with the relevant data.
+
+        Raises:
+            HttpResultsWrongCodeVAOCVError: Gets status code != 200
+            HttpCantGetResultsVAOCVError: Can't preform get function
+            HttpResultsAreEmptyOrMissingVAOCVError: At leaste one of the fields is missing
+            e: [description]
+        """
         API_URL = os.getenv("API_URL")
         url = API_URL + "/" + self.monitor_id + "?image=false"
         response = None
@@ -235,14 +258,10 @@ class CameraCapture(object):
             corners_flag = AnalyzeMeasures.AnalyzeMeasures(frame, self.computervision_client)
             # reutrn True if 4 corners detected, else - False:
             return corners_flag
-            # AnalyzeMeasures2.AnalyzeFrame(frame, self.computervision_client)
         else:
-            # new_old_corners = AnalyzeFrame.AnalyzeFrame(frame, self.computervision_client, self.boundries, self.areas_of_interes, self.ocrSocket, self.setupMarkersCorners)
             new_old_corners, new_results_list = AnalyzeFrame.AnalyzeFrame(frame, self.computervision_client, self.boundries, self.areas_of_interes, self.ocrSocket, self.setupMarkersCorners, self.results_list)
-            # TODO: try-except
             self.setupMarkersCorners = new_old_corners
             self.results_list = new_results_list
-            # AnalyzeFrame2.AnalyzeFrame(frame, self.computervision_client, self.boundries)
         return True
 
     
