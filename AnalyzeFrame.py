@@ -25,12 +25,32 @@ from ExceptionsModule import *
 
 
 def distance(p1, p2):
+    """
+    calculate distance (l2 norm) between two given points (2d)
+    Arguments:
+    p1, p2 (points, (x,y)) - two points
+    Returns:
+    the distance
+    """
     xdis = (p1[0]-p2[0])**2
     ydis = (p1[1]-p2[1])**2
     return math.sqrt(xdis + ydis)
 
 
 def fix_corners(current_corners, last_corners):
+    """
+    takes a set of corners and replaces each of the last
+    corners with the closest one of the new corners (if we
+    have less than 4 new ones - completes the set to four
+    with the old ones)
+    Arguments:
+    current_corners - list/dictionary containing 0-4 points 
+    representing the new corners found.
+    last_corners - list/dictionary containing 4 points
+    representing the last complete set of 4 corners
+    Returns:
+    the fixed set of corners ((4,2) list)
+    """
     fixed_corners = [[-1,-1], [-1,-1], [-1,-1], [-1,-1]]
     for cp in current_corners:
         min_dis = 500000000
@@ -48,6 +68,14 @@ def fix_corners(current_corners, last_corners):
 
 
 def order_points(pts):
+    """
+    re-arranges a set of given 4 points to the order
+    (tl, tr, br, bl)
+    Arguments:
+    pts - a (4,2) shaped list containing the points
+    Returns:
+    rect - the ordered pts set
+    """
     rect = np.zeros((4, 2), dtype = "float32")
     num_pts = np.array(pts)
     s = num_pts.sum(axis = 1)
@@ -60,7 +88,16 @@ def order_points(pts):
 
 
 def four_point_transform(image, pts):
-    # obtain a consistent order of the points and unpack them
+    """
+    takes an image and a set of 4 corners - reshapes the
+    image based on the corners - trapezoid to rectangle
+    Arguments:
+    image - the image
+    pts - a (4,2) shaped list containing the points(corners)
+    Returns:
+    warped - the reshaped image
+    """
+    # obtain a consistent order of the points and unpack   them
     # individually
     rect = order_points(pts)
     (tl, tr, br, bl) = rect
@@ -95,6 +132,14 @@ def four_point_transform(image, pts):
 
 
 def detect_markers(frame):
+    """
+    detects the Aruco corner markers
+    Arguments:
+    frame - an image
+    Returns:
+    fixed_corners - a (4,2) list representing the middle of 
+    the preceived corner markers
+    """
     '''cv2.imshow('frame',frame)
     if cv2.waitKey(100) & 0xFF == ord('q'):
        pass
@@ -122,6 +167,19 @@ def detect_markers(frame):
 
 
 def create_areas(area_dict, img):
+    """
+    creates a set of formatted 'areas' - images with the
+    the coordinates of their bottom left corner (in the
+    source image):
+    areas - [area's image, minimum height, minimum width]
+    Arguments:
+    area_dict - a dictionary containing the areas, it's keys
+    represent the areas names and the values are:
+    [hmin, hmax, wmin, wmax] in the source image
+    img - the source image
+    Returns:
+    areas - list of the newly formatted areas
+    """
     s = img.shape
     height, width = s[0], s[1]
     areas = []
@@ -135,7 +193,17 @@ def create_areas(area_dict, img):
         areas.append(new_area)
     return areas
 
-def create_areas_black(area_dict, img): #blocks irelevant area and return the original image with blocked part
+def create_areas_black(area_dict, img): 
+    """ takes the frame's areas-of-interest, and the frame itself, and blackens the irrelevant parts of the frame
+
+    Arguments:
+        area_dict -- dict of areas lists (in percentage)
+        img  -- frame
+
+    Returns:
+        areas -- list with the original blackend frame
+    """
+    #blocks irelevant area and return the original image with blocked part
     s = img.shape
     height, width = s[0], s[1]
     areas = []
@@ -160,6 +228,15 @@ def create_areas_black(area_dict, img): #blocks irelevant area and return the or
 
 
 def transform_coords(coords, area):
+    """
+    transform coordiantes from an area to coords in the 
+    source image
+    Arguments:
+    coords - coordinates in the area image
+    area - area from the list created by create_areas
+    Returns:
+    fixed_coords - the coordinates in the source image
+    """
     fixed_coords = []
     for j in range(8):
         if j%2==0:
@@ -208,6 +285,19 @@ def create_bounded_output(readings, boundings, boundries):
 
 
 def check_overlap(temp_bounding, hard_bounding):
+    """
+    check whether the given bounding overlaps with the 
+    boundry
+    Arguments:
+    temp_bounding - coordinates (8, representing 4 corners)
+    of the current reading
+    hard_counding - coordiantes representing the boundries 
+    of the selected field
+    Returns:
+    output - binary - true means the bounding overlaps with
+    the boundry
+    """
+
     a = [hard_bounding[0][0],hard_bounding[0][1],hard_bounding[1][0],hard_bounding[1][1]]
     b = [temp_bounding[0],temp_bounding[1],temp_bounding[4],temp_bounding[5]]
     total_area = (a[2] - a[0]) * (a[3] - a[1])
@@ -220,6 +310,19 @@ def check_overlap(temp_bounding, hard_bounding):
 
     
 def check_dot(temp_bounding, hard_bounding):
+    """
+    check whether the given bounding contains the center of 
+    the boundry
+    Arguments:
+    temp_bounding - coordinates (8, representing 4 corners)
+    of the current reading
+    hard_counding - coordiantes representing the boundries 
+    of the selected field
+    Returns:
+    output - binary - true means the bounding is within the 
+    boundry
+    """
+
     # center_dot = (hard_bounding[0][0] + (hard_bounding[1][0] - hard_bounding[0][0])/ 2 , hard_bounding[0][1] + (hard_bounding[1][1] - hard_bounding[0][1])/ 2)
     center_dot = (hard_bounding[0] + (hard_bounding[1] - hard_bounding[0])/ 2 , hard_bounding[2] + (hard_bounding[3] - hard_bounding[2])/ 2)
     if center_dot[0] >= temp_bounding[0] and center_dot[0] <= temp_bounding[4] and center_dot[1] >= temp_bounding[1] and center_dot[1] <= temp_bounding[5]:
@@ -228,6 +331,18 @@ def check_dot(temp_bounding, hard_bounding):
 
 
 def check_boundry(bounding, boundry):
+    """
+    check whether the given bounding is within the given 
+    boundry
+    Arguments:
+    bounding - coordinates (8, representing 4 corners) of 
+    the current reading
+    boundry - coordiantes representing the boundries of the
+    selected field
+    Returns:
+    output - binary - true means the bounding is within the 
+    boundry
+    """
     output = bounding[0]>=boundry[0]
     output = output and (bounding[6]>=boundry[0])
     output = output and (bounding[2]<=boundry[1])
@@ -240,6 +355,7 @@ def check_boundry(bounding, boundry):
 
 
 def fix_string(s):
+    # irrelevant function, not in use
     json_string_fin = ""
     last_c=""
     for c in s:
@@ -259,6 +375,18 @@ def fix_string(s):
 
 
 def sockets_output_former(ocr_res, mon_id, medical_warning, mode_warning, results_warning):
+    """ forms the final output json to be sent to the UI via socket, with respect to the selected data format
+
+    Arguments:
+        ocr_res {dict} -- OCR Results
+        mon_id {string} -- device ID to be updated
+        medical_warning {string} -- warning displayed on respirator (if exists)
+        mode_warning {bool} -- does the respirator in the wrong mode?
+        results_warning {bool} -- does 50% or more of the results are N/A?
+
+    Returns:
+        output {json} -- the json to be sent
+    """
     json_dict = {}
     json_dict["JsonData"] = ocr_res
     json_dict["DeviceID"] = mon_id
@@ -274,6 +402,18 @@ def sockets_output_former(ocr_res, mon_id, medical_warning, mode_warning, result
 
 
 def get_digits(img, computervision_client, mode="digits"):
+    """
+    reads the textual information from an image (monitor)
+    Sends the frame to MS OCR cloud cognitive service
+    Arguments:
+    img - the source image
+    computervision_client - the client
+    mode - "digits"/"text" - reads device measures or device text (such as warnings and modes)
+    Returns:
+    results - the ocr results - a list containing pairs of 
+    the [result, result bounding]
+    """
+
     # encodedFrame = cv2.imencode(".jpg", img)[1].tostring()
     # tmp_frame = cv2.imdecode(np.frombuffer(img, np.uint8), -1)
     # cv2.imshow("image", tmp_frame)
@@ -359,6 +499,13 @@ def get_ala_digits(img):
     return(filtered_results)
 
 def get_intel_digits(img, mode):
+    """preform OCR on selected frame, parse and returns the values.
+    Works with Intel's Text Spotting model.
+
+    Arguments:
+        img {image} -- frame
+        mode {string} -- "digits"/"text" - reading measures digits or text (such as warning etc.)
+    """
     # tmp_frame = cv2.imdecode(np.frombuffer(img, np.uint8), -1)
     # cv2.imshow("image", tmp_frame)
     # cv2.waitKey(0)
@@ -387,7 +534,6 @@ def get_intel_digits(img, mode):
                 filtered_results.append((s, item['coords']))
             else:
                 continue
-    # print("--------------------")
     # print(filtered_results)
     return(filtered_results)
 
@@ -404,15 +550,16 @@ def boundries_to_areas(boundries, hight, width):
 
 
 def getVelaModeAndWarning(img, marker_corners, computervision_client):
-    """[summary]
+    """ If device is a Vela respirator - read its warnings and selected mode.
+    Works with MSOCR and with INTEL ocr, dependes on the env var.
 
     Arguments:
-        img {[type]} -- [description]
-        marker_corners {[type]} -- [description]
-        computervision_client {[type]} -- [description]
+        img {image} -- raw video frame
+        marker_corners {list} -- ARuco markers locations detected on the device
+        computervision_client {MS cv client} -- client object to send MS OCR the frame
 
     Returns:
-        [type] -- [description]
+        found_mode, found_warning - {string}, {string} -- found mode, found warning
     """
     s = img.shape
     height, width = s[0], s[1]
@@ -477,6 +624,16 @@ def getVelaModeAndWarning(img, marker_corners, computervision_client):
 
 
 def fix_readings(readings_dic):
+    """
+    fix faulty readings, based on basic measures-based logic and domain knowledge
+    Arguments:
+    readings_dic - a dictionary containing the results of 
+    the ocr
+    Returns:
+    readings_dic - the dictionary containing the  fixed 
+    results of the ocr
+    """
+
     CV_MODEL = os.getenv("CV_MODEL")
     for name, read in readings_dic.items(): 
         read, rlen = str(read), len(read)
@@ -516,7 +673,7 @@ def fix_readings(readings_dic):
                 else:
                     readings_dic[name] = read[rlen-2] + read[rlen-1]
         elif name == 'SpO2':
-            if int(read) > 100: # TODO: left to decide whether to check situations with singal-digit sat level
+            if int(read) > 100: # TODO: left to decide whether to check situations with single-digit sat level
                 if rlen == 3:
                     readings_dic[name] = read[1] + read[2]
                 elif read[rlen-1] == "0" and read[rlen-2] == "0":
@@ -548,12 +705,32 @@ def fix_readings(readings_dic):
     return readings_dic
         
 def isNumber(x):
+    """
+    check whether the input is a number
+    Arguments:
+    x - an input
+    Returns:
+    binary - true if the input is a number
+    """
     try:
         return bool(0 == float(x)*0)
     except:
         return False
 
 def create_hist_dict(result_list):
+    """
+    create a histogram of the results 
+    Arguments:
+    results_list - a list of dictionaries containing several 
+    ocr results
+    the ocr
+    Returns:
+    hist_dict - a dictionary of dictionaries. every 
+    key(field) has a dictionary, and the field's 
+    dictionary's keys are the possible results. it's values 
+    are the number of times they appeard in the 
+    results_list.
+    """
     hist_dict = {}
     for res in result_list:
         for (key, val) in res.items():
@@ -569,6 +746,19 @@ def create_hist_dict(result_list):
     return(hist_dict)
 
 def histogram_out(result_list, key, k):
+    """
+    return from a list of results, for a specific key, the
+    top result that appeard at least k times (or none if 
+    there isn't one)
+    Arguments:
+    result_list - a list of dictionaries containing several 
+    ocr results
+    key - a specific key for the results (the name of a 
+    field)
+    k - number of minimum times the result appeard
+    Returns:
+    the top result that appeared at least k times
+    """
     hist_dict = create_hist_dict(result_list)
     best = max(hist_dict[key].items(), key=operator.itemgetter(1))
     if (best[1] >= k and best[0] != "N/A"): 
@@ -577,6 +767,22 @@ def histogram_out(result_list, key, k):
         return None
 
 def fix_output(output, results_list, k):
+    """
+    fix the result's errors based on the last few results.
+    checks if the numeric results is similar (in 50% range 
+    from last result), and fixes it if it's not and the 
+    result before the last isn't different from the last (in 
+    which case - keeps this one)
+    also fixes N/A's (missed readings) by returning the last 
+    viable result
+    Arguments:
+    output - the current ocr result (a dictionary)
+    results_list - a list of dictionaries containing several 
+    ocr results
+    k - number of minimum times the result appeard 
+    Returns:
+    new_output - the fixed ocr result
+    """
     new_output = output.copy()
     for key, val in output.items():
         new_val = val
@@ -610,6 +816,17 @@ def fix_output(output, results_list, k):
             
 
 def generic_errors(output, last_results):
+    """
+    return some errors based on the output (amount of 
+    missing fields, fields that are completely missing from 
+    the last few results)
+    Arguments:
+    output - the current ocr result (a dictionary)
+    last_results - a list of dictionaries containing several 
+    ocr results
+    Returns:
+    results_warning - binary T/F
+    """
     results_warning = None
     miss_count = 0
     for key, value in output.items():
@@ -651,6 +868,7 @@ def AnalyzeFrame(orig_frame, computervision_client, boundries, areas_of_interes,
     new_corners = detect_markers(frame)
     old_corners = last_four_corners
 
+    # TODO: check for duplicated markers - whether one was detected twice in close locations
     if len(new_corners) < 4:
         fixed_corners = fix_corners(new_corners, old_corners)
     elif len(new_corners) > 4:
